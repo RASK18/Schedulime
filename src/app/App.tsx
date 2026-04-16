@@ -582,6 +582,7 @@ const App = (): JSX.Element => {
   const [activeDecisionMenuKey, setActiveDecisionMenuKey] = useState<string | null>(null);
   const latestSyncRequestId = useRef(0);
   const scheduledAutoSyncKey = useRef<string | null>(null);
+  const hasShownOfflineReadyToast = useRef(false);
 
   const {
     needRefresh: [needRefresh],
@@ -649,6 +650,18 @@ const App = (): JSX.Element => {
       window.clearTimeout(timeoutId);
     };
   }, [toast]);
+
+  useEffect(() => {
+    if (!offlineReady || hasShownOfflineReadyToast.current) {
+      return;
+    }
+
+    hasShownOfflineReadyToast.current = true;
+    setToast({
+      message: 'La app ya está lista para funcionar offline.',
+      tone: 'success'
+    });
+  }, [offlineReady]);
 
   const weekWindow = getLocalWeekWindow(new Date(), visibleWeekOffset);
   const isCurrentWeek = visibleWeekOffset === 0;
@@ -984,16 +997,12 @@ const App = (): JSX.Element => {
 
       {(message ||
         snapshot.syncState.latestError ||
-        offlineReady ||
         snapshot.syncState.availableVersion ||
         needRefresh) && (
         <section className="banner-stack">
           {message && <Banner tone="info">{message}</Banner>}
           {snapshot.syncState.latestError && (
             <Banner tone="warning">{snapshot.syncState.latestError}</Banner>
-          )}
-          {offlineReady && (
-            <Banner tone="success">La app ya está lista para funcionar offline.</Banner>
           )}
           {snapshot.syncState.availableVersion && (
             <Banner tone="accent">
