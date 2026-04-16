@@ -113,7 +113,7 @@ const formatAnimeMetric = (
   type: 'score' | 'popularity'
 ): string => {
   if (value === null) {
-    return 'N/A';
+    return '-';
   }
 
   if (type === 'score') {
@@ -1420,7 +1420,7 @@ const AnimeCard = ({
             </span>
           </div>
           <p className="meta-line">
-            Score {entry.anime.averageScore ?? 'N/A'} · Popularidad {entry.anime.popularity ?? 'N/A'}
+            Score {entry.anime.averageScore ?? '-'} · Popularidad {entry.anime.popularity ?? '-'}
           </p>
           {entry.anime.genres.length > 0 ? (
             <p className="meta-line">{entry.anime.genres.slice(0, 3).join(' · ')}</p>
@@ -1493,8 +1493,14 @@ const AnimeDetailsDialog = ({
             <p className="eyebrow">Detalle del anime</p>
             <h2>{entry.anime.title}</h2>
           </div>
-          <button type="button" className="ghost-button" onClick={onClose}>
-            Cerrar
+          <button
+            type="button"
+            className="ghost-button modal-close-button"
+            aria-label="Cerrar"
+            title="Cerrar"
+            onClick={onClose}
+          >
+            &times;
           </button>
         </header>
 
@@ -1606,10 +1612,16 @@ const SettingsDialog = ({
         <header className="modal-header">
           <div>
             <p className="eyebrow">Configuración local</p>
-            <h2>Tus reglas de recomendación</h2>
+            <h2>Ajustes</h2>
           </div>
-          <button type="button" className="ghost-button" onClick={onClose}>
-            Cerrar
+          <button
+            type="button"
+            className="ghost-button modal-close-button"
+            aria-label="Cerrar"
+            title="Cerrar"
+            onClick={onClose}
+          >
+            &times;
           </button>
         </header>
 
@@ -1620,7 +1632,7 @@ const SettingsDialog = ({
               type="text"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="ej. RafaAnime"
+                  placeholder="ej. RASK18"
             />
             <small>
               {isOnline
@@ -1630,7 +1642,7 @@ const SettingsDialog = ({
           </label>
 
           <label>
-            Máximo de episodios recomendados por día
+            Episodios recomendados por día
             <input
               type="number"
               value={maxEpisodesPerDay}
@@ -1653,7 +1665,7 @@ const SettingsDialog = ({
               checked={hideIgnored}
               onChange={(event) => setHideIgnored(event.target.checked)}
             />
-            <span>Ocultar animes ignorados del calendario principal</span>
+            <span>Ocultar animes ignorados</span>
           </label>
 
           {error && <Banner tone="warning">{error}</Banner>}
@@ -1691,8 +1703,14 @@ const IgnoredDialog = ({
               Los autoignorados se restaurarán como <strong>Dudando</strong>.
           </p>
         </div>
-        <button type="button" className="ghost-button" onClick={onClose}>
-          Cerrar
+        <button
+          type="button"
+          className="ghost-button modal-close-button"
+          aria-label="Cerrar"
+          title="Cerrar"
+          onClick={onClose}
+        >
+          &times;
         </button>
       </header>
 

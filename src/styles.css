@@ -1056,14 +1056,31 @@ a {
 }
 
 .modal-header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   gap: 18px;
   align-items: flex-start;
+  padding-right: 58px;
+  min-height: 42px;
 }
 
 .modal-header h2 {
   margin: 0;
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 1.75rem;
+  line-height: 1;
 }
 
 .settings-form {
@@ -1076,6 +1093,16 @@ a {
   display: grid;
   gap: 8px;
   font-weight: 700;
+}
+
+.settings-form .toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-form .toggle input {
+  flex-shrink: 0;
 }
 
 .settings-form input[type='text'],
