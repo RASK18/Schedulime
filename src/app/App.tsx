@@ -21,11 +21,13 @@ import {
 } from '../types';
 import { buildCalendarView } from '../lib/recommendations';
 import {
+  formatTimeLabel,
   formatLastUpdatedLabel,
   formatWeekRangeLabel,
   getLocalWeekWindow,
   getTodayWeekdayIndex
 } from '../lib/date';
+import { getNowMarkerPlacement } from '../lib/now-marker';
 import {
   loadSnapshot,
   replaceSyncSnapshot,
@@ -1344,6 +1346,7 @@ const App = (): JSX.Element => {
             <DayColumn
               key={day.index}
               day={day}
+              currentTime={currentTime}
               activeDecisionMenuKey={activeDecisionMenuKey}
               onDecisionMenuToggle={setActiveDecisionMenuKey}
               onDecisionChange={handleDecision}
@@ -1404,6 +1407,7 @@ const App = (): JSX.Element => {
 
 const DayColumn = ({
   day,
+  currentTime,
   activeDecisionMenuKey,
   onDecisionMenuToggle,
   onDecisionChange,
@@ -1411,13 +1415,22 @@ const DayColumn = ({
   highlightToday
 }: {
   day: CalendarDayViewModel;
+  currentTime: number;
   activeDecisionMenuKey: string | null;
   onDecisionMenuToggle: (menuKey: string | null) => void;
   onDecisionChange: (mediaId: number, decision: DecisionKind | null) => Promise<void>;
   onOpenDetails: (entry: CalendarEntryViewModel | null) => void;
   highlightToday: boolean;
-}): JSX.Element => (
-  <article
+}): JSX.Element => {
+  const nowMarkerPlacement = getNowMarkerPlacement({
+    entries: day.entries,
+    currentTime,
+    showMarker: highlightToday
+  });
+  const nowMarkerTimeLabel = formatTimeLabel(Math.floor(currentTime / 1000));
+
+  return (
+    <article
     className={highlightToday ? 'day-column today' : 'day-column'}
     aria-current={highlightToday ? 'date' : undefined}
   >
@@ -1433,19 +1446,39 @@ const DayColumn = ({
       {day.entries.length === 0 ? (
         <div className="empty-day">Sin estrenos visibles este día.</div>
       ) : (
-        day.entries.map((entry) => (
-          <AnimeCard
-            key={entry.entry.key}
-            entry={entry}
-            isMenuOpen={activeDecisionMenuKey === entry.entry.key}
-            onMenuToggle={onDecisionMenuToggle}
-            onDecisionChange={onDecisionChange}
-            onOpenDetails={onOpenDetails}
-          />
-        ))
+        <>
+          {nowMarkerPlacement === 'before-first' ? (
+            <NowMarker timeLabel={nowMarkerTimeLabel} />
+          ) : null}
+          {day.entries.map((entry, index) => {
+            const isMarkerAfterEntry =
+              nowMarkerPlacement === `after-entry:${entry.entry.key}` ||
+              (nowMarkerPlacement === 'after-last' && index === day.entries.length - 1);
+
+            return (
+              <Fragment key={entry.entry.key}>
+                <AnimeCard
+                  entry={entry}
+                  isMenuOpen={activeDecisionMenuKey === entry.entry.key}
+                  onMenuToggle={onDecisionMenuToggle}
+                  onDecisionChange={onDecisionChange}
+                  onOpenDetails={onOpenDetails}
+                />
+                {isMarkerAfterEntry ? <NowMarker timeLabel={nowMarkerTimeLabel} /> : null}
+              </Fragment>
+            );
+          })}
+        </>
       )}
     </div>
-  </article>
+    </article>
+  );
+};
+
+const NowMarker = ({ timeLabel }: { timeLabel: string }): JSX.Element => (
+  <div className="now-marker" role="separator" aria-label={`Hora actual ${timeLabel}`}>
+    <span className="now-marker-time">{timeLabel}</span>
+  </div>
 );
 
 const AnimeCard = ({

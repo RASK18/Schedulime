@@ -644,6 +644,47 @@ a {
   align-content: start;
 }
 
+.now-marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  margin: -8px 0;
+}
+
+.now-marker::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--danger);
+  transform: translateY(-50%);
+  opacity: 0.92;
+}
+
+.now-marker-time {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid rgba(255, 139, 122, 0.45);
+  color: var(--danger);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
 .empty-day,
 .empty-state {
   padding: 22px;
