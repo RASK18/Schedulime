@@ -343,6 +343,12 @@ a {
   padding: 12px 18px;
 }
 
+.danger-button {
+  background: var(--danger-soft);
+  border-color: rgba(255, 139, 122, 0.42);
+  color: var(--danger);
+}
+
 .inline-button {
   display: inline-flex;
   align-items: center;
@@ -362,6 +368,12 @@ a {
 .primary-button:hover,
 .inline-button:hover {
   background: var(--accent-strong);
+}
+
+.danger-button:hover {
+  background: rgba(255, 139, 122, 0.2);
+  border-color: rgba(255, 139, 122, 0.58);
+  color: #ffc0b6;
 }
 
 .ghost-button:disabled,
@@ -896,9 +908,7 @@ a {
 }
 
 .decision-menu-option.active {
-  background: var(--accent-soft);
-  border-color: rgba(61, 180, 242, 0.3);
-  color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px currentColor;
 }
 
 .decision-button.active {
@@ -919,16 +929,28 @@ a {
   color: var(--decision-unsure);
 }
 
-.decision-menu-option.active.decision-menu-option-watching {
+.decision-button.active.decision-button-ignore {
+  background: var(--danger-soft);
+  border-color: rgba(255, 139, 122, 0.42);
+  color: var(--danger);
+}
+
+.decision-menu-option.decision-menu-option-watching {
   background: var(--decision-watching-soft);
   border-color: rgba(120, 224, 143, 0.42);
   color: var(--decision-watching);
 }
 
-.decision-menu-option.active.decision-menu-option-unsure {
+.decision-menu-option.decision-menu-option-unsure {
   background: var(--decision-unsure-soft);
   border-color: rgba(255, 216, 90, 0.42);
   color: var(--decision-unsure);
+}
+
+.decision-menu-option.decision-menu-option-ignore {
+  background: var(--danger-soft);
+  border-color: rgba(255, 139, 122, 0.42);
+  color: var(--danger);
 }
 
 .decision-button.reset {
@@ -1122,7 +1144,9 @@ a {
 
 .dialog-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .anime-detail-layout {
