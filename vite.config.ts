@@ -3,8 +3,10 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 const appVersion = '0.1.0';
+const repoBase = '/Schedulime/';
 
 export default defineConfig({
+  base: repoBase,
   plugins: [
     react(),
     VitePWA({
@@ -19,10 +21,10 @@ export default defineConfig({
         theme_color: '#de6a2d',
         background_color: '#fff6ea',
         display: 'standalone',
-        start_url: '/',
+        start_url: repoBase,
         icons: [
           {
-            src: '/icon.svg',
+            src: `${repoBase}icon.svg`,
             sizes: 'any',
             type: 'image/svg+xml',
             purpose: 'any maskable'
