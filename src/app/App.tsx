@@ -104,6 +104,8 @@ const compactDecisionSymbols: Record<DecisionKind, string> = {
   ignore: 'x'
 };
 
+const logoUrl = `${import.meta.env.BASE_URL}schedulime-logo.png`;
+
 const formatAnimeMetric = (
   value: number | null,
   type: 'score' | 'popularity'
@@ -896,7 +898,7 @@ const App = (): JSX.Element => {
         <div className="hero-copy-block">
           <h1 className="brand-heading">
             <img
-              src="/schedulime-logo.png"
+              src={logoUrl}
               alt="Schedulime"
               className="brand-logo"
               width="964"
