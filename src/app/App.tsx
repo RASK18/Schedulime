@@ -26,7 +26,14 @@ import {
   getLocalWeekWindow,
   getTodayWeekdayIndex
 } from '../lib/date';
-import { loadSnapshot, replaceSyncSnapshot, saveDecision, saveSettings, saveSyncState } from '../lib/db';
+import {
+  loadSnapshot,
+  replaceSyncSnapshot,
+  resetLocalData,
+  saveDecision,
+  saveSettings,
+  saveSyncState
+} from '../lib/db';
 import { validatePublicUser } from '../lib/anilist';
 import {
   checkRemoteVersion,
@@ -572,7 +579,7 @@ const getDecisionButtonClassName = (decision: DecisionKind | null): string => {
   }
 
   if (decision === 'ignore') {
-    return 'decision-button icon-button active';
+    return 'decision-button icon-button active decision-button-ignore';
   }
 
   return 'decision-button icon-button';
@@ -582,19 +589,16 @@ const getDecisionMenuOptionClassName = (
   currentDecision: DecisionKind | null,
   optionDecision: DecisionKind
 ): string => {
-  if (currentDecision !== optionDecision) {
-    return 'decision-menu-option';
-  }
+  const stateClassName =
+    optionDecision === 'watching'
+      ? 'decision-menu-option-watching'
+      : optionDecision === 'unsure'
+        ? 'decision-menu-option-unsure'
+        : 'decision-menu-option-ignore';
 
-  if (optionDecision === 'watching') {
-    return 'decision-menu-option active decision-menu-option-watching';
-  }
-
-  if (optionDecision === 'unsure') {
-    return 'decision-menu-option active decision-menu-option-unsure';
-  }
-
-  return 'decision-menu-option active';
+  return currentDecision === optionDecision
+    ? `decision-menu-option ${stateClassName} active`
+    : `decision-menu-option ${stateClassName}`;
 };
 
 const App = (): JSX.Element => {
@@ -616,6 +620,7 @@ const App = (): JSX.Element => {
   const [activeDecisionMenuKey, setActiveDecisionMenuKey] = useState<string | null>(null);
   const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
   const latestSyncRequestId = useRef(0);
+  const autoSyncPausedRef = useRef(false);
   const scheduledAutoSyncKey = useRef<string | null>(null);
   const hasShownOfflineReadyToast = useRef(false);
   const mobileActionsRef = useRef<HTMLDivElement | null>(null);
@@ -857,6 +862,10 @@ const App = (): JSX.Element => {
       return;
     }
 
+    if (autoSyncPausedRef.current) {
+      return;
+    }
+
     const autoSyncKey = getAutoSyncKey(snapshot.settings, weekWindow);
 
     if (!isSnapshotStale(snapshot.syncState, weekWindow)) {
@@ -909,6 +918,7 @@ const App = (): JSX.Element => {
     }
 
     await saveSettings(normalizedSettings);
+    autoSyncPausedRef.current = false;
     startTransition(() => {
       setSnapshot((currentSnapshot) => ({
         ...currentSnapshot,
@@ -924,6 +934,48 @@ const App = (): JSX.Element => {
     }
 
     return { ok: true };
+  };
+
+  const handleSettingsReset = async (): Promise<SaveResult> => {
+    try {
+      latestSyncRequestId.current += 1;
+      autoSyncPausedRef.current = true;
+      scheduledAutoSyncKey.current = null;
+
+      await resetLocalData();
+
+      const emptySnapshot = createEmptySnapshot();
+
+      startTransition(() => {
+        setSnapshot(emptySnapshot);
+        setVisibleWeekOffset(0);
+        setActiveCompactDay(getTodayWeekdayIndex());
+        setActiveDecisionMenuKey(null);
+        setMobileActionsOpen(false);
+        setIgnoredOpen(false);
+        setDetailEntry(null);
+      });
+
+      setSyncing(false);
+      setSettingsOpen(false);
+      setMessage('Reset completado. Usa Actualizar para volver a descargar el calendario.');
+      setToast({
+        message: 'Datos locales restablecidos.',
+        tone: 'success'
+      });
+
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error: getSyncErrorMessage(error)
+      };
+    }
+  };
+
+  const handleManualSync = (): void => {
+    autoSyncPausedRef.current = false;
+    void runSync(snapshot.settings, 'manual');
   };
 
   const handleDecision = async (mediaId: number, decision: DecisionKind | null): Promise<void> => {
@@ -1037,7 +1089,7 @@ const App = (): JSX.Element => {
                     className="mobile-actions-item"
                     onClick={() => {
                       setMobileActionsOpen(false);
-                      void runSync(snapshot.settings, 'manual');
+                      handleManualSync();
                     }}
                     disabled={syncing}
                     role="menuitem"
@@ -1087,7 +1139,7 @@ const App = (): JSX.Element => {
               <button
             type="button"
             className="ghost-button hero-icon-button"
-            onClick={() => void runSync(snapshot.settings, 'manual')}
+            onClick={handleManualSync}
             disabled={syncing}
                 title="Actualizar semana"
                 aria-label="Actualizar semana"
@@ -1249,6 +1301,7 @@ const App = (): JSX.Element => {
           initialSettings={snapshot.settings}
           isOnline={isOnline}
           onClose={() => setSettingsOpen(false)}
+          onReset={handleSettingsReset}
           onSave={handleSettingsSave}
         />
       )}
@@ -1433,7 +1486,7 @@ const AnimeCard = ({
           <button
             key={decision}
             type="button"
-            className={entry.decision === decision ? 'decision-button icon-button active' : 'decision-button icon-button'}
+            className={entry.decision === decision ? getDecisionButtonClassName(decision) : 'decision-button icon-button'}
             onClick={() => void onDecisionChange(entry.anime.id, decision)}
             title={decisionLabels[decision]}
             aria-label={decisionLabels[decision]}
@@ -1456,18 +1509,18 @@ const AnimeCard = ({
       </div>
 
       <div className="card-footer">
-        <a href={entry.anime.siteUrl} className="link-button" target="_blank" rel="noreferrer">
-          AniList
-        </a>
         {streamingUrl ? (
           <a href={streamingUrl} className="link-button" target="_blank" rel="noreferrer">
-            Ver streaming
+            Ver Online
           </a>
         ) : (
           <button type="button" className="link-button disabled" disabled>
             Streaming próximamente
           </button>
         )}
+        <a href={entry.anime.siteUrl} className="link-button" target="_blank" rel="noreferrer">
+          AniList
+        </a>
       </div>
     </article>
   );
@@ -1527,6 +1580,21 @@ const AnimeDetailsDialog = ({
           </div>
 
           <div className="anime-detail-copy">
+            <div className="detail-actions">
+              {streamingUrl ? (
+                <a href={streamingUrl} className="link-button" target="_blank" rel="noreferrer">
+                  Ver Online
+                </a>
+              ) : (
+                <button type="button" className="link-button disabled" disabled>
+                  Streaming pronto
+                </button>
+              )}
+              <a href={entry.anime.siteUrl} className="link-button" target="_blank" rel="noreferrer">
+                AniList
+              </a>
+            </div>
+
             <div className="anime-topline">
               <span className="time-chip">{entry.timeLabel}</span>
               {entry.entry.episode ? <span className="time-chip soft">Ep. {entry.entry.episode}</span> : null}
@@ -1549,20 +1617,6 @@ const AnimeDetailsDialog = ({
                 : 'AniList no ha publicado una descripción para este anime.'}
             </div>
 
-            <div className="detail-actions">
-              <a href={entry.anime.siteUrl} className="link-button" target="_blank" rel="noreferrer">
-                AniList
-              </a>
-              {streamingUrl ? (
-                <a href={streamingUrl} className="link-button" target="_blank" rel="noreferrer">
-                  Ver streaming
-                </a>
-              ) : (
-                <button type="button" className="link-button disabled" disabled>
-                  Streaming pronto
-                </button>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -1574,11 +1628,13 @@ const SettingsDialog = ({
   initialSettings,
   isOnline,
   onClose,
+  onReset,
   onSave
 }: {
   initialSettings: Settings;
   isOnline: boolean;
   onClose: () => void;
+  onReset: () => Promise<SaveResult>;
   onSave: (settings: Settings) => Promise<SaveResult>;
 }): JSX.Element => {
   const [username, setUsername] = useState(initialSettings.anilistUsername);
@@ -1586,6 +1642,29 @@ const SettingsDialog = ({
   const [hideIgnored, setHideIgnored] = useState(initialSettings.hideIgnored);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const isBusy = saving || resetting;
+
+  const handleReset = async (): Promise<void> => {
+    const confirmed = window.confirm(
+      'Esto borrara la snapshot local, las decisiones guardadas, los ignorados manuales y restaurara los ajustes por defecto. Quieres continuar?'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setResetting(true);
+    setError(null);
+
+    const result = await onReset();
+
+    setResetting(false);
+
+    if (!result.ok) {
+      setError(result.error ?? 'No se pudo restablecer la aplicacion.');
+    }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
@@ -1631,6 +1710,7 @@ const SettingsDialog = ({
             <input
               type="text"
               value={username}
+              disabled={isBusy}
               onChange={(event) => setUsername(event.target.value)}
                   placeholder="ej. RASK18"
             />
@@ -1648,6 +1728,7 @@ const SettingsDialog = ({
               value={maxEpisodesPerDay}
               min={1}
               max={12}
+              disabled={isBusy}
               onChange={(event) => {
                 const nextValue = Number.parseInt(event.target.value, 10);
                 if (Number.isNaN(nextValue)) {
@@ -1663,6 +1744,7 @@ const SettingsDialog = ({
             <input
               type="checkbox"
               checked={hideIgnored}
+              disabled={isBusy}
               onChange={(event) => setHideIgnored(event.target.checked)}
             />
             <span>Ocultar animes ignorados</span>
@@ -1671,7 +1753,15 @@ const SettingsDialog = ({
           {error && <Banner tone="warning">{error}</Banner>}
 
           <div className="dialog-actions">
-            <button type="submit" className="primary-button" disabled={saving}>
+            <button
+              type="button"
+              className="ghost-button danger-button"
+              onClick={() => void handleReset()}
+              disabled={isBusy}
+            >
+              {resetting ? 'Reseteando...' : 'Reset'}
+            </button>
+            <button type="submit" className="primary-button" disabled={isBusy}>
               {saving ? 'Guardando...' : 'Guardar configuración'}
             </button>
           </div>

@@ -194,3 +194,29 @@ export const saveDecision = async (
 
   await awaitTransaction(transaction);
 };
+
+export const resetLocalData = async (): Promise<void> => {
+  const database = await openDatabase();
+  const transaction = database.transaction(
+    ['settings', 'anime', 'schedule', 'decisions', 'meta'],
+    'readwrite'
+  );
+
+  const settingsStore = transaction.objectStore('settings');
+  const animeStore = transaction.objectStore('anime');
+  const scheduleStore = transaction.objectStore('schedule');
+  const decisionsStore = transaction.objectStore('decisions');
+  const metaStore = transaction.objectStore('meta');
+
+  settingsStore.clear();
+  animeStore.clear();
+  scheduleStore.clear();
+  decisionsStore.clear();
+  metaStore.clear();
+
+  settingsStore.put({ key: 'settings', value: defaultSettings() });
+  metaStore.put({ key: 'syncState', value: defaultSyncState() });
+  metaStore.put({ key: 'watchedMediaIds', value: [] });
+
+  await awaitTransaction(transaction);
+};
