@@ -74,7 +74,7 @@ const recommendationLabels: Record<
   NonNullable<CalendarEntryViewModel['recommendationReason']>,
   string
 > = {
-  continuation: 'Continuacion',
+  continuation: 'Continuación',
   score: 'Top score'
 };
 
@@ -576,6 +576,7 @@ const App = (): JSX.Element => {
   const [message, setMessage] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [isCompact, setIsCompact] = useState(() =>
     window.matchMedia('(max-width: 960px)').matches
   );
@@ -636,6 +637,16 @@ const App = (): JSX.Element => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       mediaQuery.removeEventListener('change', handleViewportChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 60000);
+
+    return () => {
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -885,7 +896,6 @@ const App = (): JSX.Element => {
     });
   };
 
-  const syncBadge = syncing ? 'Sincronizando...' : isOnline ? 'Online' : 'Offline';
   const noSnapshotYet =
     booted && snapshot.syncState.weekKey === null && snapshot.scheduleEntries.length === 0;
 
@@ -911,7 +921,7 @@ const App = (): JSX.Element => {
           </p>
         </div>
 
-        <div className="week-switcher" aria-label="Navegacion semanal">
+        <div className="week-switcher" aria-label="Navegación semanal">
           <button
             type="button"
             className="ghost-button week-nav-button"
@@ -924,16 +934,7 @@ const App = (): JSX.Element => {
           </button>
 
           <div className="week-switcher-copy">
-            <p className="hero-meta-label">Semana visible</p>
             <strong className="week-switcher-value">{formatWeekRangeLabel(weekWindow)}</strong>
-            <button
-              type="button"
-              className="week-reset-button"
-              onClick={() => setVisibleWeekOffset(0)}
-              disabled={isCurrentWeek || syncing}
-            >
-              Semana actual
-            </button>
           </div>
 
           <button
@@ -949,13 +950,6 @@ const App = (): JSX.Element => {
         </div>
 
         <div className="hero-actions">
-          <div className="hero-status">
-            <p className="hero-meta-label">Ultima actualizacion</p>
-            <strong className="hero-meta-value">
-              {formatLastUpdatedLabel(snapshot.syncState.lastSuccessfulSync)}
-            </strong>
-            <div className={`badge ${isOnline ? 'badge-online' : 'badge-offline'}`}>{syncBadge}</div>
-          </div>
           <button
             type="button"
             className="ghost-button hero-icon-button"
@@ -970,13 +964,20 @@ const App = (): JSX.Element => {
             type="button"
             className="ghost-button hero-icon-button"
             onClick={() => setSettingsOpen(true)}
-            title="Configuracion"
-            aria-label="Configuracion"
+            title="Configuración"
+            aria-label="Configuración"
           >
             <SettingsIcon className="ui-icon" />
           </button>
-          <button type="button" className="ghost-button" onClick={() => setIgnoredOpen(true)}>
-            Ignorados ({deferredCalendarView.ignoredEntries.length})
+          <button
+            type="button"
+            className="ghost-button ignored-trigger-button"
+            onClick={() => setIgnoredOpen(true)}
+            title={`Ignorados (${deferredCalendarView.ignoredEntries.length})`}
+            aria-label={`Ignorados (${deferredCalendarView.ignoredEntries.length})`}
+          >
+            <EyeOffIcon className="ui-icon" />
+            <span>({deferredCalendarView.ignoredEntries.length})</span>
           </button>
         </div>
       </header>
@@ -984,7 +985,7 @@ const App = (): JSX.Element => {
       <section className="status-grid">
         <StatusCard
           label="Última actualización"
-          value={formatLastUpdatedLabel(snapshot.syncState.lastSuccessfulSync)}
+          value={formatLastUpdatedLabel(snapshot.syncState.lastSuccessfulSync, currentTime)}
         />
         <StatusCard label="Semana visible" value={formatWeekRangeLabel(weekWindow)} />
         <StatusCard
@@ -1089,14 +1090,19 @@ const App = (): JSX.Element => {
       )}
 
       <footer className="footer-note">
-        <p>
-          Usuario AniList: <strong>{snapshot.settings.anilistUsername || 'manual / sin usuario'}</strong>
-        </p>
-        <p>
-          Máximo recomendado por día: <strong>{snapshot.settings.maxEpisodesPerDay}</strong>
-        </p>
-        <p>
-          Versión local: <strong>{APP_VERSION}</strong>
+        <div className="footer-sync-meta">
+          <span
+            className={`footer-sync-dot ${syncing || isOnline ? 'footer-sync-dot-online' : 'footer-sync-dot-offline'}`}
+            aria-label={syncing ? 'Sincronizando' : isOnline ? 'Online' : 'Offline'}
+            title={syncing ? 'Sincronizando' : isOnline ? 'Online' : 'Offline'}
+          />
+          <p>
+            Última actualización:{' '}
+            <strong>{formatLastUpdatedLabel(snapshot.syncState.lastSuccessfulSync, currentTime)}</strong>
+          </p>
+        </div>
+        <p className="footer-version">
+          Versión: <strong>{APP_VERSION}</strong>
         </p>
       </footer>
 
@@ -1337,7 +1343,7 @@ const AnimeDetailsDialog = ({
   onClose: () => void;
 }): JSX.Element => {
   const genresLabel =
-    entry.anime.genres.length > 0 ? entry.anime.genres.join(' / ') : 'Sin genero especificado';
+    entry.anime.genres.length > 0 ? entry.anime.genres.join(' / ') : 'Sin género especificado';
   const scoreColor = getScoreColor(entry.anime.averageScore);
   const streamingUrl = getStreamingUrl(entry.anime.title, entry.entry.episode);
 
@@ -1396,7 +1402,7 @@ const AnimeDetailsDialog = ({
             <div className="detail-description">
               {entry.anime.description
                 ? renderDescriptionContent(entry.anime.description)
-                : 'AniList no ha publicado una descripcion para este anime.'}
+                : 'AniList no ha publicado una descripción para este anime.'}
             </div>
 
             <div className="detail-actions">
@@ -1444,9 +1450,7 @@ const SettingsDialog = ({
 
     const result = await onSave({
       anilistUsername: username.trim(),
-      maxEpisodesPerDay: Number.isFinite(maxEpisodesPerDay)
-        ? Math.min(Math.max(maxEpisodesPerDay, 1), 12)
-        : 1,
+      maxEpisodesPerDay: Math.min(12, Math.max(1, maxEpisodesPerDay)),
       hideIgnored,
       timezoneMode: 'local'
     });
@@ -1491,12 +1495,16 @@ const SettingsDialog = ({
             Máximo de episodios recomendados por día
             <input
               type="number"
+              value={maxEpisodesPerDay}
               min={1}
               max={12}
-              value={maxEpisodesPerDay}
               onChange={(event) => {
                 const nextValue = Number.parseInt(event.target.value, 10);
-                setMaxEpisodesPerDay(Number.isNaN(nextValue) ? 1 : nextValue);
+                if (Number.isNaN(nextValue)) {
+                  return;
+                }
+
+                setMaxEpisodesPerDay(Math.min(12, Math.max(1, nextValue)));
               }}
             />
           </label>

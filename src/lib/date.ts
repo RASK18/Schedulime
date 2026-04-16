@@ -16,6 +16,9 @@ const lastUpdatedFormatter = new Intl.DateTimeFormat('es-ES', {
   hour: '2-digit',
   minute: '2-digit'
 });
+const relativeTimeFormatter = new Intl.RelativeTimeFormat('es-ES', {
+  numeric: 'auto'
+});
 
 export const getLocalWeekWindow = (
   currentDate = new Date(),
@@ -87,8 +90,32 @@ export const formatDateLabel = (date: Date): string => {
 export const formatTimeLabel = (epochSeconds: number): string =>
   timeFormatter.format(new Date(epochSeconds * 1000));
 
-export const formatLastUpdatedLabel = (timestamp: number | null): string =>
-  timestamp ? lastUpdatedFormatter.format(new Date(timestamp)) : 'Nunca';
+export const formatLastUpdatedLabel = (
+  timestamp: number | null,
+  currentTime = Date.now()
+): string => {
+  if (!timestamp) {
+    return 'Nunca';
+  }
+
+  const diffMs = timestamp - currentTime;
+  const diffSeconds = Math.round(diffMs / 1000);
+  const absoluteSeconds = Math.abs(diffSeconds);
+
+  if (absoluteSeconds < 60) {
+    return 'hace unos segundos';
+  }
+
+  if (absoluteSeconds < 3600) {
+    return relativeTimeFormatter.format(Math.round(diffSeconds / 60), 'minute');
+  }
+
+  if (absoluteSeconds < 86400) {
+    return relativeTimeFormatter.format(Math.round(diffSeconds / 3600), 'hour');
+  }
+
+  return lastUpdatedFormatter.format(new Date(timestamp));
+};
 
 export const addDays = (date: Date, days: number): Date => {
   const clone = new Date(date);

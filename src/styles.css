@@ -137,12 +137,12 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 6px;
   justify-self: center;
 }
 
 .week-switcher-copy {
-  min-width: 220px;
+  min-width: 160px;
   text-align: center;
 }
 
@@ -187,41 +187,6 @@ a {
   justify-self: end;
 }
 
-.hero-status {
-  display: grid;
-  grid-template-columns: auto auto;
-  grid-template-areas:
-    "label badge"
-    "value badge";
-  column-gap: 14px;
-  row-gap: 2px;
-  align-items: center;
-  text-align: left;
-}
-
-.hero-meta-label,
-.hero-meta-value {
-  margin: 0;
-}
-
-.hero-meta-label {
-  grid-area: label;
-  font-size: 0.76rem;
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.hero-meta-value {
-  grid-area: value;
-  font-size: 0.98rem;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-
-.hero-status .badge {
-  grid-area: badge;
-}
-
 .hero-icon-button {
   width: 48px;
   min-width: 48px;
@@ -229,6 +194,12 @@ a {
   padding: 0;
   display: inline-grid;
   place-items: center;
+}
+
+.ignored-trigger-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .refresh-icon {
@@ -927,6 +898,7 @@ a {
 .footer-note {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 18px;
   margin-top: 22px;
   padding: 16px 18px;
@@ -938,6 +910,38 @@ a {
 
 .footer-note p {
   margin: 0;
+}
+
+.footer-version {
+  white-space: nowrap;
+  margin-left: auto;
+  text-align: right;
+}
+
+.footer-sync-meta {
+  display: inline-flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.footer-sync-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.footer-sync-dot-online {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.footer-sync-dot-offline {
+  background: var(--warning);
+  box-shadow: 0 0 0 3px var(--warning-soft);
 }
 
 .modal-shell {
@@ -1158,7 +1162,7 @@ a {
   font-size: 0.92rem;
 }
 
-@media (max-width: 1500px) {
+@media (max-width: 1860px) {
   .calendar {
     grid-template-columns: repeat(7, minmax(210px, 1fr));
     overflow-x: auto;
