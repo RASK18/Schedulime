@@ -1051,7 +1051,9 @@ const App = (): JSX.Element => {
           </button>
 
           <div className="week-switcher-copy">
-            <strong className="week-switcher-value">{formatWeekRangeLabel(weekWindow)}</strong>
+            <strong className={isCurrentWeek ? 'week-switcher-value current-week' : 'week-switcher-value'}>
+              {formatWeekRangeLabel(weekWindow)}
+            </strong>
           </div>
 
           <button
@@ -1342,10 +1344,16 @@ const DayColumn = ({
   onOpenDetails: (entry: CalendarEntryViewModel | null) => void;
   highlightToday: boolean;
 }): JSX.Element => (
-  <article className={highlightToday ? 'day-column today' : 'day-column'}>
+  <article
+    className={highlightToday ? 'day-column today' : 'day-column'}
+    aria-current={highlightToday ? 'date' : undefined}
+  >
     <header className="day-header">
-      <h2>{day.label}</h2>
-      <p>{day.dateLabel}</p>
+      <div className="day-header-copy">
+        <h2>{day.label}</h2>
+        <p>{day.dateLabel}</p>
+      </div>
+      {highlightToday ? <span className="today-indicator">Hoy</span> : null}
     </header>
 
     <div className="cards">
