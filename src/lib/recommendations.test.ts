@@ -8,6 +8,7 @@ const createAnime = (
   overrides: Partial<Anime> = {}
 ): Anime => ({
   id,
+  idMal: null,
   title: `Anime ${id}`,
   titleEnglish: null,
   titleNative: null,

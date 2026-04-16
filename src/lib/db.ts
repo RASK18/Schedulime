@@ -36,6 +36,11 @@ const hasValidDecision = (
 ): decision is StoredDecisionRecord & { decision: DecisionKind } =>
   isDecisionKind(decision.decision);
 
+const normalizeStoredAnime = (anime: Anime): Anime => ({
+  ...anime,
+  idMal: anime.idMal ?? null
+});
+
 const openDatabase = (): Promise<IDBDatabase> => {
   if (databasePromise) {
     return databasePromise;
@@ -126,7 +131,12 @@ export const loadSnapshot = async (): Promise<AppSnapshot> => {
 
   const snapshot = createEmptySnapshot();
   snapshot.settings = storedSettings?.value ?? defaultSettings();
-  snapshot.animeById = Object.fromEntries(animeList.map((anime) => [anime.id, anime]));
+  snapshot.animeById = Object.fromEntries(
+    animeList.map((anime) => {
+      const normalizedAnime = normalizeStoredAnime(anime);
+      return [normalizedAnime.id, normalizedAnime];
+    })
+  );
   snapshot.scheduleEntries = scheduleEntries;
   const decisionEntries = decisions
     .filter(hasValidDecision)

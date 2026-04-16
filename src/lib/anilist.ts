@@ -51,6 +51,7 @@ interface UserListCollectionResponse {
 
 interface AnilistMedia {
   id: number;
+  idMal: number | null;
   isAdult: boolean;
   description: string | null;
   siteUrl: string | null;
@@ -175,6 +176,7 @@ const normalizeAnime = (media: AnilistMedia): Anime => {
 
   return {
     id: media.id,
+    idMal: media.idMal ?? null,
     title: preferredTitle,
     titleEnglish: media.title?.english ?? null,
     titleNative: media.title?.native ?? null,
@@ -223,6 +225,7 @@ export const fetchWeeklySchedule = async (window: {
           episode
           media {
             id
+            idMal
             isAdult
             description(asHtml: false)
             siteUrl

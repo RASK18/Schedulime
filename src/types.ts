@@ -21,6 +21,7 @@ export interface Settings {
 
 export interface Anime {
   id: number;
+  idMal: number | null;
   title: string;
   titleEnglish: string | null;
   titleNative: string | null;
