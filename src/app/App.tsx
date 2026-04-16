@@ -90,6 +90,8 @@ const decisionLabels: Record<DecisionKind, string> = {
   ignore: 'Ignorar'
 };
 
+const compactDayLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'] as const;
+
 const compactRecommendationSymbols: Record<
   NonNullable<CalendarEntryViewModel['recommendationReason']>,
   string
@@ -430,6 +432,35 @@ const MoreHorizontalIcon = ({ className }: { className?: string }): JSX.Element 
   </IconBase>
 );
 
+const MenuIcon = ({ className }: { className?: string }): JSX.Element => (
+  <IconBase className={className}>
+    <path
+      d="M4 7h16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4 12h16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M4 17h16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </IconBase>
+);
+
 const ChevronLeftIcon = ({ className }: { className?: string }): JSX.Element => (
   <IconBase className={className}>
     <path
@@ -583,9 +614,11 @@ const App = (): JSX.Element => {
   const [visibleWeekOffset, setVisibleWeekOffset] = useState(0);
   const [activeCompactDay, setActiveCompactDay] = useState(getTodayWeekdayIndex());
   const [activeDecisionMenuKey, setActiveDecisionMenuKey] = useState<string | null>(null);
+  const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
   const latestSyncRequestId = useRef(0);
   const scheduledAutoSyncKey = useRef<string | null>(null);
   const hasShownOfflineReadyToast = useRef(false);
+  const mobileActionsRef = useRef<HTMLDivElement | null>(null);
 
   const {
     needRefresh: [needRefresh],
@@ -675,6 +708,38 @@ const App = (): JSX.Element => {
       tone: 'success'
     });
   }, [offlineReady]);
+
+  useEffect(() => {
+    if (!isCompact) {
+      setMobileActionsOpen(false);
+    }
+  }, [isCompact]);
+
+  useEffect(() => {
+    if (!mobileActionsOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent): void => {
+      if (!mobileActionsRef.current?.contains(event.target as Node)) {
+        setMobileActionsOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        setMobileActionsOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [mobileActionsOpen]);
 
   const weekWindow = getLocalWeekWindow(new Date(), visibleWeekOffset);
   const isCurrentWeek = visibleWeekOffset === 0;
@@ -950,13 +1015,82 @@ const App = (): JSX.Element => {
         </div>
 
         <div className="hero-actions">
-          <button
+          {isCompact && (
+            <div className="mobile-actions" ref={mobileActionsRef}>
+              <button
+                type="button"
+                className="ghost-button hero-icon-button mobile-actions-trigger"
+                onClick={() => setMobileActionsOpen((currentValue) => !currentValue)}
+                title="Abrir acciones"
+                aria-label="Abrir acciones"
+                aria-haspopup="menu"
+                aria-expanded={mobileActionsOpen}
+                aria-controls="mobile-actions-menu"
+              >
+                <MenuIcon className="ui-icon" />
+              </button>
+
+              {mobileActionsOpen && (
+                <div className="mobile-actions-menu" id="mobile-actions-menu" role="menu">
+                  <button
+                    type="button"
+                    className="mobile-actions-item"
+                    onClick={() => {
+                      setMobileActionsOpen(false);
+                      void runSync(snapshot.settings, 'manual');
+                    }}
+                    disabled={syncing}
+                    role="menuitem"
+                  >
+                    <span className="mobile-actions-item-copy">
+                      <RefreshIcon className={syncing ? 'refresh-icon spinning' : 'refresh-icon'} />
+                      <span>Actualizar</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="mobile-actions-item"
+                    onClick={() => {
+                      setMobileActionsOpen(false);
+                      setSettingsOpen(true);
+                    }}
+                    role="menuitem"
+                  >
+                    <span className="mobile-actions-item-copy">
+                      <SettingsIcon className="ui-icon" />
+                      <span>Ajustes</span>
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="mobile-actions-item"
+                    onClick={() => {
+                      setMobileActionsOpen(false);
+                      setIgnoredOpen(true);
+                    }}
+                    role="menuitem"
+                  >
+                    <span className="mobile-actions-item-copy">
+                      <EyeOffIcon className="ui-icon" />
+                      <span>Ignorados</span>
+                    </span>
+                    <span className="mobile-actions-item-meta">
+                      {deferredCalendarView.ignoredEntries.length}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {!isCompact && (
+            <>
+              <button
             type="button"
             className="ghost-button hero-icon-button"
             onClick={() => void runSync(snapshot.settings, 'manual')}
             disabled={syncing}
-            title="Refrescar semana"
-            aria-label="Refrescar semana"
+                title="Actualizar semana"
+                aria-label="Actualizar semana"
           >
             <RefreshIcon className={syncing ? 'refresh-icon spinning' : 'refresh-icon'} />
           </button>
@@ -979,6 +1113,8 @@ const App = (): JSX.Element => {
             <EyeOffIcon className="ui-icon" />
             <span>({deferredCalendarView.ignoredEntries.length})</span>
           </button>
+            </>
+          )}
         </div>
       </header>
 
@@ -1058,8 +1194,10 @@ const App = (): JSX.Element => {
               type="button"
               className={day.index === activeCompactDay ? 'day-pill active' : 'day-pill'}
               onClick={() => setActiveCompactDay(day.index)}
+              aria-label={day.label}
+              title={day.label}
             >
-              <span>{day.shortLabel}</span>
+              <span>{compactDayLabels[day.index] ?? day.shortLabel}</span>
             </button>
           ))}
         </nav>
@@ -1097,7 +1235,7 @@ const App = (): JSX.Element => {
             title={syncing ? 'Sincronizando' : isOnline ? 'Online' : 'Offline'}
           />
           <p>
-            Última actualización:{' '}
+            Actualizado:{' '}
             <strong>{formatLastUpdatedLabel(snapshot.syncState.lastSuccessfulSync, currentTime)}</strong>
           </p>
         </div>

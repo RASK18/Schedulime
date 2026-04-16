@@ -98,6 +98,7 @@ a {
   gap: 24px;
   align-items: center;
   padding: 6px 0 0;
+  z-index: 2;
 }
 
 .hero-copy-block {
@@ -185,6 +186,59 @@ a {
   justify-content: flex-end;
   align-items: center;
   justify-self: end;
+}
+
+.mobile-actions {
+  position: relative;
+}
+
+.mobile-actions-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 12;
+  min-width: 208px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--surface-overlay);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow);
+}
+
+.mobile-actions-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  font-weight: 700;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.mobile-actions-item:hover {
+  background: var(--surface-strong);
+}
+
+.mobile-actions-item:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mobile-actions-item-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobile-actions-item-meta {
+  color: var(--accent-strong);
 }
 
 .hero-icon-button {
@@ -1184,17 +1238,28 @@ a {
     max-width: none;
   }
 
-  .hero,
+  .hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "brand actions"
+      "switcher switcher";
+    gap: 16px 12px;
+    align-items: start;
+  }
+
   .toolbar {
     flex-direction: column;
     align-items: stretch;
   }
 
   .week-switcher {
+    grid-area: switcher;
     justify-content: space-between;
+    justify-self: stretch;
   }
 
   .hero-copy-block {
+    grid-area: brand;
     justify-self: stretch;
   }
 
@@ -1205,6 +1270,26 @@ a {
   .week-switcher-copy {
     flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .hero-actions {
+    grid-area: actions;
+    justify-self: end;
+    align-self: start;
+    flex-wrap: nowrap;
+  }
+
+  .day-nav {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    overflow: visible;
+  }
+
+  .day-pill {
+    justify-content: center;
+    min-width: 0;
+    padding: 10px 0;
   }
 
   .status-grid {
