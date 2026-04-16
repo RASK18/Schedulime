@@ -79,9 +79,9 @@ Se ha verificado en este entorno que:
 
 Nota: `npm run test` existe como script del proyecto, pero en esta sesion no se pudo completar por una restriccion del entorno (`spawn EPERM` al arrancar Vite/Vitest).
 
-Otras paginas similares: 
+## Otras paginas similares: 
 - https://www.livechart.me/schedule
 - https://animegratis.net/horario
 - https://simkl.com/anime/today/
-- https://animecountdown.com/
+- https://animecountdown.com/aired
 - https://animeschedule.net/
