@@ -53,6 +53,8 @@ type ToastState = {
   tone: 'success';
 };
 
+type StreamingValidationState = 'available' | 'missing' | 'unknown';
+
 const statusToneLabels: Record<NonNullable<CalendarEntryViewModel['recommendationReason']>, string> = {
   continuation: 'Continuación',
   score: 'Top score'
@@ -113,6 +115,9 @@ const compactDecisionSymbols: Record<DecisionKind, string> = {
   ignore: 'x'
 };
 
+const CORS_PROXY_PREFIX = 'https://corsproxy.io/?url=';
+const streamingValidationCache = new Map<string, StreamingValidationState>();
+const pendingStreamingValidations = new Map<string, Promise<StreamingValidationState>>();
 const logoUrl = `${import.meta.env.BASE_URL}schedulime-logo.png`;
 
 const formatAnimeMetric = (
@@ -291,6 +296,74 @@ const getStreamingUrl = (title: string, episode: number | null): string | null =
   }
 
   return `https://animeav1.com/media/${slug}/${episode}`;
+};
+
+const getStreamingValidationUrl = (streamingUrl: string): string =>
+  `${CORS_PROXY_PREFIX}${encodeURIComponent(`${streamingUrl}/__data.json`)}`;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const hasMissingStreamingError = (value: unknown): boolean => {
+  if (Array.isArray(value)) {
+    return value.some(hasMissingStreamingError);
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const error = isRecord(value.error) ? value.error : null;
+  const errorMessage = typeof error?.message === 'string' ? error.message : null;
+
+  if (
+    value.type === 'error' &&
+    (value.status === 404 || errorMessage === 'Episodio no encontrado')
+  ) {
+    return true;
+  }
+
+  return Object.values(value).some(hasMissingStreamingError);
+};
+
+const validateStreamingUrl = async (streamingUrl: string): Promise<StreamingValidationState> => {
+  const cached = streamingValidationCache.get(streamingUrl);
+  if (cached) {
+    return cached;
+  }
+
+  const pendingRequest = pendingStreamingValidations.get(streamingUrl);
+  if (pendingRequest) {
+    return pendingRequest;
+  }
+
+  const request = (async () => {
+    try {
+      const response = await fetch(getStreamingValidationUrl(streamingUrl), {
+        cache: 'no-store'
+      });
+      const payload = await response.json();
+      const validationState = hasMissingStreamingError(payload)
+        ? 'missing'
+        : response.ok
+          ? 'available'
+          : 'unknown';
+
+      if (validationState !== 'unknown') {
+        streamingValidationCache.set(streamingUrl, validationState);
+      }
+
+      return validationState;
+    } catch {
+      return 'unknown';
+    } finally {
+      pendingStreamingValidations.delete(streamingUrl);
+    }
+  })();
+
+  pendingStreamingValidations.set(streamingUrl, request);
+
+  return request;
 };
 
 const IconBase = ({
@@ -1545,6 +1618,35 @@ const AnimeDetailsDialog = ({
     entry.anime.genres.length > 0 ? entry.anime.genres.join(' / ') : 'Sin género especificado';
   const scoreColor = getScoreColor(entry.anime.averageScore);
   const streamingUrl = getStreamingUrl(entry.anime.title, entry.entry.episode);
+  const [streamingValidationState, setStreamingValidationState] = useState<StreamingValidationState>(
+    () => (streamingUrl ? streamingValidationCache.get(streamingUrl) ?? 'unknown' : 'unknown')
+  );
+
+  useEffect(() => {
+    if (!streamingUrl) {
+      setStreamingValidationState('unknown');
+      return;
+    }
+
+    const cachedState = streamingValidationCache.get(streamingUrl) ?? 'unknown';
+    setStreamingValidationState(cachedState);
+
+    if (cachedState !== 'unknown') {
+      return;
+    }
+
+    let cancelled = false;
+
+    void validateStreamingUrl(streamingUrl).then((validationState) => {
+      if (!cancelled) {
+        setStreamingValidationState(validationState);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [streamingUrl]);
 
   return (
     <div className="modal-shell" role="dialog" aria-modal="true" onClick={onClose}>
@@ -1590,9 +1692,30 @@ const AnimeDetailsDialog = ({
           <div className="anime-detail-copy">
             <div className="detail-actions">
               {streamingUrl ? (
-                <a href={streamingUrl} className="link-button" target="_blank" rel="noreferrer">
-                  Ver Online
-                </a>
+                streamingValidationState === 'missing' ? (
+                  <button
+                    type="button"
+                    className="link-button streaming-link-button disabled"
+                    disabled
+                    title="El enlace de streaming no esta disponible"
+                  >
+                    Ver Online
+                  </button>
+                ) : (
+                  <a
+                    href={streamingUrl}
+                    className="link-button streaming-link-button"
+                    target="_blank"
+                    rel="noreferrer"
+                    title={
+                      streamingValidationState === 'unknown'
+                        ? 'Comprobando disponibilidad del enlace'
+                        : 'Abrir enlace de streaming'
+                    }
+                  >
+                    Ver Online
+                  </a>
+                )
               ) : (
                 <button type="button" className="link-button disabled" disabled>
                   Streaming pronto
