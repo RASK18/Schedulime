@@ -1,51 +1,67 @@
+<p align="center">
+  <img src="public/schedulime-logo.png" alt="Schedulime" width="520">
+</p>
+
 # Schedulime
 
-PWA estatica para consultar un calendario semanal de estrenos anime y resaltar que series ver cada dia sin depender de backend propio. La aplicacion descarga datos desde AniList directamente en el cliente, guarda una snapshot local en `IndexedDB` y sigue funcionando offline aunque el hosting o AniList no esten disponibles mas tarde.
+Calendario semanal de estrenos anime pensado para consultar rapido que sale cada dia y decidir que ver sin depender de un backend propio. La app guarda una snapshot local en tu navegador y puede seguir siendo util offline despues de la primera sincronizacion.
 
-La version publicada vive en GitHub Pages:
+**Web publicada:** [rask18.github.io/Schedulime](https://rask18.github.io/Schedulime/)
 
-- https://rask18.github.io/Schedulime/
+## Que puedes hacer
 
-## Que incluye
+- Ver los estrenos de anime de lunes a domingo en la hora local de tu dispositivo.
+- Moverte entre semanas y revisar tanto la actual como semanas cercanas.
+- Detectar rapidamente que ver cada dia con episodios destacados automaticamente.
+- Marcar cada anime como `Viendo`, `Dudando` o `Ignorar`.
+- Abrir el detalle de cada serie, consultar su ficha de AniList y probar el acceso a `Ver Online` cuando haya un enlace construible.
+- Ocultar ignorados para limpiar el calendario principal.
+- Seguir usando la app offline despues de haber cargado datos al menos una vez.
 
-- Calendario semanal de lunes a domingo en hora local del dispositivo.
-- Persistencia local de configuracion, snapshot semanal, decisiones del usuario y estado de sincronizacion.
-- Decisiones manuales por anime: `viendo`, `dudando`, `ignorar`.
-- Recomendaciones diarias basadas en continuaciones, `meanScore` y `popularity`.
-- Sincronizacion progresiva: primero carga desde local y despues refresca en segundo plano si la snapshot esta caducada.
-- Modo offline tras la primera carga con datos.
-- PWA instalable con `vite-plugin-pwa`.
-- Aviso de nueva version mediante service worker.
+## Vista general
 
-## Requisitos
+<!-- Captura sugerida: pantalla principal con el calendario semanal, las tarjetas destacadas y la navegacion entre semanas -->
 
-- Node.js 20 o superior.
-- npm 10 o superior.
+## Como se usa
 
-## Scripts
+1. Abre la web y deja que cargue la semana visible.
+2. Navega entre semanas con las flechas de la cabecera.
+3. Mira los animes destacados de cada dia para detectar rapidamente las recomendaciones.
+4. Marca tus series como `Viendo`, `Dudando` o `Ignorar` segun tu criterio.
+5. Abre cualquier tarjeta para ver detalles, descripcion, metricas y enlaces externos.
+6. Si ocultas ignorados, puedes recuperarlos mas tarde desde el panel de `Ignorados`.
+7. Tras una primera sincronizacion correcta, la app puede volver a abrirse sin red usando la snapshot local guardada.
 
-```bash
-npm install
-npm run dev
-npm run build
-npm run preview
-npm run test
-```
+## Por que usarla
 
-## Flujo de datos
+- Prioriza continuaciones y titulos mejor valorados para ayudarte a decidir que ver sin revisar toda la semana a mano.
+- Guarda tus decisiones localmente, asi que no necesitas iniciar sesion ni depender de un servidor propio.
+- Mantiene una copia semanal en el navegador para que el calendario siga disponible aunque no tengas conexion en ese momento.
+- Se puede instalar como PWA y avisa cuando hay una nueva version disponible.
+- Usa AniList como fuente principal de datos, pero la experiencia diaria ocurre directamente en el cliente.
 
-1. La app arranca y lee `IndexedDB`.
-2. Renderiza la ultima snapshot disponible.
-3. Si hay conexion y la snapshot esta caducada o pertenece a otra semana, consulta AniList.
-4. Guarda la nueva semana, la lista publica del usuario y recalcula recomendaciones localmente.
-5. El motor de recomendacion prioriza `viendo`, despues continuaciones, y despues titulos con mejor `meanScore` y `popularity`.
+## Detalle, ajustes e ignorados
+
+- El detalle de cada anime muestra descripcion, generos, score, popularidad y acceso directo a AniList.
+- En `Ajustes` puedes indicar tu usuario publico de AniList, cambiar el limite de recomendaciones por dia y decidir si quieres ocultar ignorados.
+- El panel de `Ignorados` separa lo que has descartado manualmente de lo que la app ha filtrado automaticamente y te permite recuperarlo.
+
+<!-- Captura sugerida: modal de detalle del anime o vista de ajustes/ignorados -->
 
 ## Limitaciones actuales
 
-- V1 usa solo usuario publico de AniList; no hay OAuth ni acceso a listas privadas.
-- Si el navegador borra los datos locales, se pierden ajustes y decisiones.
-- El boton de streaming sigue siendo un placeholder salvo cuando se puede construir una URL valida.
-- La primera carga necesita red para poblar la snapshot inicial.
+- La primera carga con contenido necesita conexion para descargar la snapshot inicial.
+- Solo se usa el usuario publico de AniList; no hay OAuth ni acceso a listas privadas.
+- Si el navegador borra los datos locales, se pierden la snapshot, los ajustes y tus decisiones.
+- El boton `Ver Online` funciona en modo best-effort: intenta construir y validar un enlace, pero no garantiza disponibilidad.
+
+## Documentacion tecnica
+
+Si quieres profundizar en el funcionamiento interno de la app, la documentacion tecnica esta en [`docs/index.md`](docs/index.md).
+
+- [Funcionalidades de la web](docs/funcionalidades-web.md)
+- [Arquitectura y datos](docs/arquitectura-y-datos.md)
+- [PWA, offline y despliegue](docs/pwa-offline-y-despliegue.md)
 
 ## Desarrollo local
 
@@ -54,34 +70,19 @@ npm install
 npm run dev
 ```
 
-La app usa Vite y React. En local se sirve desde la raiz (`/`), pero el build de produccion esta configurado para publicarse bajo `/Schedulime/`.
+Scripts disponibles:
 
-## Deploy en GitHub Pages
+- `npm run build`
+- `npm run preview`
+- `npm run test`
 
-El repositorio incluye un workflow en `.github/workflows/deploy-pages.yml` que:
+## Otras webs similares
 
-1. Instala dependencias con `npm ci`.
-2. Ejecuta `npm run build`.
-3. Publica `dist/` en GitHub Pages con GitHub Actions.
+[LiveChart.me](https://www.livechart.me/schedule) - La mejor que encontré, la que estaba usando hasta ahora
+[AnimeSchedule.net](https://animeschedule.net/) - En mi opinión, es bastante fea
+[AnimeGratis.net](https://animegratis.net/horario) - Incomoda de usar, y he llegado a ver animes en dias erroneos
+[AnimeCountdown.com](https://animecountdown.com/aired) - Al ser cuentas atras es dificil entender que dia sale cada anime
 
-Para que funcione correctamente en este repositorio:
+## License
 
-- GitHub Pages debe usar `GitHub Actions` como fuente de despliegue.
-- La `base` de Vite esta fijada a `/Schedulime/` en produccion.
-- Los assets publicos deben resolverse con la base de Vite y no con rutas absolutas tipo `/archivo.png`.
-
-## Verificacion reciente
-
-Se ha verificado en este entorno que:
-
-- `npm run build` funciona correctamente.
-- El despliegue de Pages se realiza desde `main` mediante GitHub Actions.
-
-Nota: `npm run test` existe como script del proyecto, pero en esta sesion no se pudo completar por una restriccion del entorno (`spawn EPERM` al arrancar Vite/Vitest).
-
-## Otras paginas similares: 
-- https://www.livechart.me/schedule
-- https://animegratis.net/horario
-- https://simkl.com/anime/today/
-- https://animecountdown.com/aired
-- https://animeschedule.net/
+[GNU Affero General Public License v3.0](LICENSE)
