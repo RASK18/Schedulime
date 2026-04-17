@@ -20,7 +20,7 @@ Calendario semanal de estrenos anime pensado para consultar rapidamente que sale
 
 ## Vista general
 
-<!-- Captura sugerida: pantalla principal con el calendario semanal, las tarjetas destacadas y la navegacion entre semanas -->
+![Vista general de Schedulime](public/VistaGeneral.png)
 
 ## Como se usa
 
@@ -46,7 +46,7 @@ Calendario semanal de estrenos anime pensado para consultar rapidamente que sale
 - En `Ajustes` puedes indicar tu usuario publico de AniList, cambiar el limite de recomendaciones por dia y decidir si quieres ocultar ignorados
 - El panel de `Ignorados` separa lo que has descartado manualmente de lo que la app ha filtrado automaticamente y te permite recuperarlo
 
-<!-- Captura sugerida: modal de detalle del anime o vista de ajustes/ignorados -->
+![Detalle de anime en Schedulime](public/Detalle.png)
 
 ## Limitaciones actuales
 
