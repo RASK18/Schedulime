@@ -1931,51 +1931,65 @@ const IgnoredDialog = ({
         </div>
       ) : (
         <div className="ignored-list">
-          {entries.map((entry) => (
-            <div key={entry.anime.id} className="ignored-item">
-              <div className="ignored-item-main">
-                <button
-                  type="button"
-                  className="ignored-cover-frame ignored-detail-trigger"
-                  onClick={() => onOpenDetails(entry)}
-                  aria-label={`Abrir detalles de ${entry.anime.title}`}
-                >
-                  {entry.anime.coverImage ? (
-                    <img
-                      src={entry.anime.coverImage}
-                      alt={entry.anime.title}
-                      loading="lazy"
-                      className="cover-image"
-                    />
-                  ) : (
-                    <div className="cover-fallback">{entry.anime.title.slice(0, 1)}</div>
-                  )}
-                </button>
-                <div>
+          {entries.map((entry) => {
+            const scoreLabel = formatAnimeMetric(entry.anime.averageScore, 'score');
+            const scoreColor = getScoreColor(entry.anime.averageScore);
+
+            return (
+              <div key={entry.anime.id} className="ignored-item">
+                <div className="ignored-item-main">
                   <button
                     type="button"
-                    className="ignored-title-button"
+                    className="ignored-cover-frame ignored-detail-trigger"
                     onClick={() => onOpenDetails(entry)}
+                    aria-label={`Abrir detalles de ${entry.anime.title}`}
                   >
-                    {truncateIgnoredTitle(entry.anime.title)}
+                    {entry.anime.coverImage ? (
+                      <img
+                        src={entry.anime.coverImage}
+                        alt={entry.anime.title}
+                        loading="lazy"
+                        className="cover-image"
+                      />
+                    ) : (
+                      <div className="cover-fallback">{entry.anime.title.slice(0, 1)}</div>
+                    )}
                   </button>
-                  {getIgnoredSourceLabel(entry) ? (
-                    <p className="ignored-reason">{getIgnoredSourceLabel(entry)}</p>
-                  ) : null}
+                  <div className="ignored-copy">
+                    <button
+                      type="button"
+                      className="ignored-title-button"
+                      onClick={() => onOpenDetails(entry)}
+                    >
+                      {truncateIgnoredTitle(entry.anime.title)}
+                    </button>
+                    {getIgnoredSourceLabel(entry) ? (
+                      <p className="ignored-reason">{getIgnoredSourceLabel(entry)}</p>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="ignored-item-actions">
+                  <span
+                    className="metric-pill"
+                    title="Score"
+                    style={scoreColor ? { color: scoreColor } : undefined}
+                  >
+                    {scoreLabel}
+                  </span>
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => onRestore(entry)}
+                  >
+                    Restaurar
+                  </button>
                 </div>
               </div>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => onRestore(entry)}
-              >
-                Restaurar
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
-      </div>
+    </div>
     </div>
   </div>
 );

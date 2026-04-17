@@ -1313,7 +1313,7 @@ a {
 
 .anime-detail-layout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 210px minmax(0, 1fr);
   gap: 22px;
   margin-top: 20px;
 }
@@ -1388,6 +1388,21 @@ a {
   min-width: 0;
 }
 
+.ignored-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  flex: 1 1 auto;
+}
+
+.ignored-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .ignored-cover-frame {
   width: 56px;
   min-width: 56px;
@@ -1412,6 +1427,11 @@ a {
   font-weight: 700;
   text-align: left;
   cursor: pointer;
+  min-width: 0;
+}
+
+.ignored-item-actions .metric-pill {
+  flex-shrink: 0;
 }
 
 .ignored-item p {
@@ -1548,13 +1568,39 @@ a {
     flex-direction: column;
   }
 
-  .ignored-item,
   .modal-header {
     flex-direction: column;
     align-items: stretch;
   }
 
+  .ignored-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "main score"
+      "button button";
+    align-items: start;
+    gap: 16px 12px;
+  }
+
   .ignored-item-main {
+    grid-area: main;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ignored-item-actions {
+    display: contents;
+  }
+
+  .ignored-item-actions .metric-pill {
+    grid-area: score;
+    justify-self: end;
+    align-self: start;
+  }
+
+  .ignored-item-actions .primary-button {
+    grid-area: button;
     width: 100%;
   }
 }
