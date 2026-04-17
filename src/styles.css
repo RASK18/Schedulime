@@ -1419,6 +1419,8 @@ a {
 }
 
 .ignored-title-button {
+  display: block;
+  width: 100%;
   padding: 0;
   border: none;
   background: none;
@@ -1428,6 +1430,9 @@ a {
   text-align: left;
   cursor: pointer;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ignored-item-actions .metric-pill {
@@ -1602,5 +1607,13 @@ a {
   .ignored-item-actions .primary-button {
     grid-area: button;
     width: 100%;
+  }
+
+  .ignored-title-button {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
 }

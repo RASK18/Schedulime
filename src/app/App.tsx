@@ -258,6 +258,26 @@ const getScoreColor = (value: number | null): string | undefined => {
   return `hsl(7 82% ${interpolateLightness(value, 50, 61, 70, 40)}%)`;
 };
 
+const logStreamingButtonResult = (params: {
+  idAniList: number;
+  animeTitle: string;
+  episode: number | null;
+  idMal: number | null | undefined;
+  resolvedTitle: string;
+  streamingUrl: string | null;
+  validationState: StreamingValidationState;
+}): void => {
+  console.info('Ver Online', {
+    idAL: params.idAniList,
+    idJK: params.idMal ?? null,
+    episode: params.episode,
+    url: params.streamingUrl,
+    titleAL: params.animeTitle,
+    titleJK: params.resolvedTitle,
+    validationState: params.validationState
+  });
+};
+
 const getDecisionSummaryLabel = (decision: DecisionKind | null): string =>
   decision ? decisionLabels[decision] : 'Elegir estado';
 
@@ -284,9 +304,6 @@ const getIgnoredSourceLabel = (entry: CalendarEntryViewModel): string => {
 
   return 'Ignorado';
 };
-
-const truncateIgnoredTitle = (title: string): string =>
-  title.length > 50 ? `${title.slice(0, 47)}...` : title;
 
 const IconBase = ({
   children,
@@ -1605,6 +1622,15 @@ const AnimeDetailsDialog = ({
       setStreamingUrl(nextStreamingUrl);
 
       if (!nextStreamingUrl) {
+        logStreamingButtonResult({
+          idAniList: entry.anime.id,
+          animeTitle: entry.anime.title,
+          episode: entry.entry.episode,
+          idMal: entry.anime.idMal,
+          resolvedTitle: nextResolvedTitle,
+          streamingUrl: null,
+          validationState: 'unknown'
+        });
         return;
       }
 
@@ -1612,12 +1638,30 @@ const AnimeDetailsDialog = ({
       setStreamingValidationState(cachedState);
 
       if (cachedState !== 'unknown') {
+        logStreamingButtonResult({
+          idAniList: entry.anime.id,
+          animeTitle: entry.anime.title,
+          episode: entry.entry.episode,
+          idMal: entry.anime.idMal,
+          resolvedTitle: nextResolvedTitle,
+          streamingUrl: nextStreamingUrl,
+          validationState: cachedState
+        });
         return;
       }
 
       void validateStreamingUrl(nextStreamingUrl).then((validationState) => {
         if (!cancelled) {
           setStreamingValidationState(validationState);
+          logStreamingButtonResult({
+            idAniList: entry.anime.id,
+            animeTitle: entry.anime.title,
+            episode: entry.entry.episode,
+            idMal: entry.anime.idMal,
+            resolvedTitle: nextResolvedTitle,
+            streamingUrl: nextStreamingUrl,
+            validationState
+          });
         }
       });
     });
@@ -1961,7 +2005,7 @@ const IgnoredDialog = ({
                       className="ignored-title-button"
                       onClick={() => onOpenDetails(entry)}
                     >
-                      {truncateIgnoredTitle(entry.anime.title)}
+                      {entry.anime.title}
                     </button>
                     {getIgnoredSourceLabel(entry) ? (
                       <p className="ignored-reason">{getIgnoredSourceLabel(entry)}</p>
