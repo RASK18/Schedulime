@@ -28,6 +28,7 @@ import {
   getTodayWeekdayIndex
 } from '../lib/date';
 import { getNowMarkerPlacement } from '../lib/now-marker';
+import { sanitizeAnimeDescription } from '../lib/descriptions';
 import {
   loadSnapshot,
   replaceSyncSnapshot,
@@ -56,10 +57,18 @@ type SaveResult = {
   error?: string;
 };
 
-type ToastState = {
+type ToastTone = 'success' | 'warning';
+
+type ToastEntry = {
+  id: number;
   message: string;
-  tone: 'success';
+  tone: ToastTone;
+  durationMs: number;
 };
+
+const TOAST_VISIBLE_MS = 3200;
+const TOAST_EXIT_MS = 180;
+const TOAST_WARNING_EXTRA_MS = 2000;
 
 const statusToneLabels: Record<NonNullable<CalendarEntryViewModel['recommendationReason']>, string> = {
   continuation: 'Continuación',
@@ -143,11 +152,7 @@ const formatAnimeMetric = (
 };
 
 const renderDescriptionContent = (description: string): ReactNode => {
-  const sanitizedDescription = description
-    .replace(/\r\n?/g, '\n')
-    .replace(/(?:<br\s*\/?>\s*){2,}\(Source:\s*[^)]+\)\s*(?=(?:<br\s*\/?>|\n|$))/gi, '')
-    .replace(/\n{2,}\(Source:\s*[^)]+\)\s*(?=\n|$)/gi, '')
-    .trim();
+  const sanitizedDescription = sanitizeAnimeDescription(description);
   const parser = new DOMParser();
   const document = parser.parseFromString(`<div>${sanitizedDescription}</div>`, 'text/html');
   const root = document.body.firstElementChild;
@@ -599,7 +604,7 @@ const App = (): JSX.Element => {
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [detailEntry, setDetailEntry] = useState<CalendarEntryViewModel | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [toasts, setToasts] = useState<ToastEntry[]>([]);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
   const [isCompact, setIsCompact] = useState(() =>
@@ -610,6 +615,7 @@ const App = (): JSX.Element => {
   const [activeDecisionMenuKey, setActiveDecisionMenuKey] = useState<string | null>(null);
   const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
   const latestSyncRequestId = useRef(0);
+  const nextToastId = useRef(0);
   const autoSyncPausedRef = useRef(false);
   const scheduledAutoSyncKey = useRef<string | null>(null);
   const hasShownOfflineReadyToast = useRef(false);
@@ -620,6 +626,31 @@ const App = (): JSX.Element => {
     offlineReady: [offlineReady],
     updateServiceWorker
   } = useRegisterSW();
+
+  const pushToast = (
+    message: string,
+    tone: ToastTone,
+    durationMs = TOAST_VISIBLE_MS
+  ): void => {
+    nextToastId.current += 1;
+    const toastId = nextToastId.current;
+
+    setToasts((currentToasts) => [
+      ...currentToasts,
+      {
+        id: toastId,
+        message,
+        tone,
+        durationMs
+      }
+    ]);
+  };
+
+  const removeToast = (toastId: number): void => {
+    setToasts((currentToasts) =>
+      currentToasts.filter((currentToast) => currentToast.id !== toastId)
+    );
+  };
 
   useEffect(() => {
     let active = true;
@@ -679,29 +710,12 @@ const App = (): JSX.Element => {
   }, []);
 
   useEffect(() => {
-    if (!toast) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setToast(null);
-    }, 3200);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [toast]);
-
-  useEffect(() => {
     if (!offlineReady || hasShownOfflineReadyToast.current) {
       return;
     }
 
     hasShownOfflineReadyToast.current = true;
-    setToast({
-      message: 'La app ya está lista para funcionar offline.',
-      tone: 'success'
-    });
+    pushToast('La app ya está lista para funcionar offline.', 'success');
   }, [offlineReady]);
 
   useEffect(() => {
@@ -822,15 +836,19 @@ const App = (): JSX.Element => {
         }));
       });
 
-      if (reason !== 'background') {
-        setMessage(result.warningMessage ?? 'Sincronización completada.');
-      }
-      if (reason !== 'background' && !result.warningMessage) {
+      if (reason !== 'background' && result.warningMessage) {
         setMessage(null);
-        setToast({
-          message: 'Sincronización completada.',
-          tone: 'success'
-        });
+        if (!settings.anilistUsername.trim()) {
+          pushToast('Sincronización completada.', 'success');
+        }
+        pushToast(
+          result.warningMessage,
+          'warning',
+          !settings.anilistUsername.trim() ? TOAST_VISIBLE_MS + TOAST_WARNING_EXTRA_MS : TOAST_VISIBLE_MS
+        );
+      } else if (reason !== 'background') {
+        setMessage(null);
+        pushToast('Sincronización completada.', 'success');
       }
     } catch (error) {
       if (latestSyncRequestId.current !== requestId) {
@@ -949,10 +967,7 @@ const App = (): JSX.Element => {
       setSyncing(false);
       setSettingsOpen(false);
       setMessage('Reset completado. Usa Actualizar para volver a descargar el calendario.');
-      setToast({
-        message: 'Datos locales restablecidos.',
-        tone: 'success'
-      });
+      pushToast('Datos locales restablecidos.', 'success');
 
       return { ok: true };
     } catch (error) {
@@ -1195,7 +1210,7 @@ const App = (): JSX.Element => {
           )}
           {needRefresh && (
             <Banner tone="accent">
-              Hay una actualización del shell de la app lista para instalar.
+                Hay una actualización de la app lista para instalar
               <button
                 type="button"
                 className="inline-button"
@@ -1208,9 +1223,11 @@ const App = (): JSX.Element => {
         </section>
       )}
 
-      {toast && (
-        <div className={`toast toast-${toast.tone}`} role="status" aria-live="polite">
-          {toast.message}
+      {toasts.length > 0 && (
+        <div className="toast-stack">
+          {toasts.map((toast) => (
+            <ToastStackItem key={toast.id} toast={toast} onRemove={removeToast} />
+          ))}
         </div>
       )}
 
@@ -1249,7 +1266,7 @@ const App = (): JSX.Element => {
 
       {noSnapshotYet ? (
         <section className="empty-state">
-          <h2>No hay snapshot local todavía</h2>
+          <h2>No hay copia local todavía</h2>
           <p>
             Abre la app al menos una vez con conexión para descargar la semana actual. Después
             seguirá funcionando offline con la copia almacenada.
@@ -1811,7 +1828,7 @@ const SettingsDialog = ({
             />
             <small>
               {isOnline
-                ? 'Se validará online al guardar. Si lo dejas vacío, la app funcionará en modo manual.'
+                  ? 'Se validará online al guardar'
                 : 'Sin conexión: se guardará sin validar y se intentará sincronizar más tarde.'}
             </small>
           </label>
@@ -1960,6 +1977,48 @@ const StatusCard = ({ label, value }: { label: string; value: string }): JSX.Ele
     <strong>{value}</strong>
   </article>
 );
+
+const ToastStackItem = ({
+  toast,
+  onRemove
+}: {
+  toast: ToastEntry;
+  onRemove: (toastId: number) => void;
+}): JSX.Element => {
+  const [isLeaving, setIsLeaving] = useState(false);
+
+  useEffect(() => {
+    const leaveTimeoutId = window.setTimeout(() => {
+      setIsLeaving(true);
+    }, toast.durationMs);
+
+    return () => {
+      window.clearTimeout(leaveTimeoutId);
+    };
+  }, [toast.durationMs]);
+
+  useEffect(() => {
+    if (!isLeaving) {
+      return;
+    }
+
+    const removeTimeoutId = window.setTimeout(() => {
+      onRemove(toast.id);
+    }, TOAST_EXIT_MS);
+
+    return () => {
+      window.clearTimeout(removeTimeoutId);
+    };
+  }, [isLeaving, onRemove, toast.id]);
+
+  return (
+    <div className={isLeaving ? 'toast-slot toast-slot-leaving' : 'toast-slot'}>
+      <div className={`toast toast-${toast.tone}`} role="status" aria-live="polite">
+        {toast.message}
+      </div>
+    </div>
+  );
+};
 
 const Banner = ({
   children,

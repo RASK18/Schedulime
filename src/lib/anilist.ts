@@ -1,4 +1,5 @@
 import type { Anime, ScheduleEntry } from '../types';
+import { sanitizeAnimeDescription } from './descriptions';
 
 const ANILIST_ENDPOINT = 'https://graphql.anilist.co';
 const MAX_RETRIES = 2;
@@ -91,11 +92,7 @@ const normalizeDescription = (description: string | null): string | null => {
     return null;
   }
 
-  const normalized = description
-    .replace(/\r\n?/g, '\n')
-    .replace(/(?:<br\s*\/?>\s*){2,}\(Source:\s*[^)]+\)\s*(?=(?:<br\s*\/?>|\n|$))/gi, '')
-    .replace(/\n{2,}\(Source:\s*[^)]+\)\s*(?=\n|$)/gi, '')
-    .trim();
+  const normalized = sanitizeAnimeDescription(description);
   return normalized.length > 0 ? normalized : null;
 };
 

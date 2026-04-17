@@ -444,14 +444,42 @@ a {
   color: var(--accent-strong);
 }
 
-.toast {
+.toast-stack {
   position: fixed;
   top: 18px;
   left: 50%;
-  transform: translateX(-50%);
   z-index: 20;
-  min-width: 240px;
-  max-width: min(360px, calc(100vw - 36px));
+  width: min(360px, calc(100vw - 36px));
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast-slot {
+  overflow: hidden;
+  max-height: 140px;
+  margin-bottom: 8px;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    max-height 180ms ease,
+    margin-bottom 180ms ease,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.toast-slot:last-child {
+  margin-bottom: 0;
+}
+
+.toast-slot-leaving {
+  max-height: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.toast {
+  width: 100%;
   padding: 14px 16px;
   border-radius: 10px;
   border: 1px solid var(--surface-border);
@@ -462,6 +490,12 @@ a {
 .toast-success {
   background: var(--surface-overlay);
   color: var(--success);
+}
+
+.toast-warning {
+  background: #2b2112;
+  border-color: rgba(242, 184, 75, 0.34);
+  color: #ffd071;
 }
 
 .toolbar {
@@ -1381,12 +1415,12 @@ a {
     padding: 12px 18px 18px;
   }
 
-  .toast {
+  .toast-stack {
     top: 14px;
     left: 14px;
+    right: 14px;
     transform: none;
-    min-width: 0;
-    max-width: none;
+    width: auto;
   }
 
   .hero {
