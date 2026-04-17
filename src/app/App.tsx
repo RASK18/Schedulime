@@ -603,6 +603,7 @@ const App = (): JSX.Element => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [detailEntry, setDetailEntry] = useState<CalendarEntryViewModel | null>(null);
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
@@ -1029,13 +1030,21 @@ const App = (): JSX.Element => {
       <header className="hero">
         <div className="hero-copy-block">
           <h1 className="brand-heading">
-            <img
-              src={logoUrl}
-              alt="Schedulime"
-              className="brand-logo"
-              width="964"
-              height="245"
-            />
+            {logoLoadFailed ? (
+              <span className="brand-wordmark">
+                <span>Schedule</span>
+                <span className="brand-wordmark-accent">lime</span>
+              </span>
+            ) : (
+              <img
+                src={logoUrl}
+                alt="Schedulime"
+                className="brand-logo"
+                width="964"
+                height="245"
+                onError={() => setLogoLoadFailed(true)}
+              />
+            )}
           </h1>
           <p className="hero-copy">
             Calendario semanal de estrenos anime que sigue vivo incluso si tu hosting o AniList se

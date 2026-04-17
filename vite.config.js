@@ -52,7 +52,7 @@ export default defineConfig({
         VitePWA({
             registerType: 'prompt',
             injectRegister: 'auto',
-            includeAssets: ['icon.svg'],
+            includeAssets: ['icon.svg', 'schedulime-logo.png'],
             manifest: {
                 name: 'Schedulime',
                 short_name: 'Schedulime',

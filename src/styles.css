@@ -130,6 +130,20 @@ a {
   max-width: 100%;
 }
 
+.brand-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: clamp(3rem, 5vw, 4.8rem);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+  color: #e6ebf2;
+}
+
+.brand-wordmark-accent {
+  color: #9ed83f;
+}
+
 .hero-copy {
   display: none;
 }
@@ -413,7 +427,9 @@ a {
 }
 
 .banner-stack {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 10px;
   margin-top: 18px;
 }
@@ -423,6 +439,18 @@ a {
   border-radius: 10px;
   border: 1px solid var(--surface-border);
   font-weight: 600;
+}
+
+.banner-stack .banner {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: min(100%, 760px);
+  margin-inline: auto;
+  text-align: center;
 }
 
 .banner.info {
