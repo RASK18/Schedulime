@@ -78,8 +78,8 @@ Scripts disponibles:
 
 ## Otras webs similares
 
-[LiveChart.me](https://www.livechart.me/schedule) - La mejor que encontré, la que estaba usando hasta ahora
-[AnimeSchedule.net](https://animeschedule.net/) - En mi opinión, es bastante fea
+[LiveChart.me](https://www.livechart.me/schedule) - La mejor que encontrÃ©, la que estaba usando hasta ahora
+[AnimeSchedule.net](https://animeschedule.net/) - En mi opiniÃ³n, es bastante fea
 [AnimeGratis.net](https://animegratis.net/horario) - Incomoda de usar, y he llegado a ver animes en dias erroneos
 [AnimeCountdown.com](https://animecountdown.com/aired) - Al ser cuentas atras es dificil entender que dia sale cada anime
 
