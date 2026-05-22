@@ -6,7 +6,7 @@
 
 Calendario semanal de estrenos anime pensado para consultar rapidamente que sale cada dia y decidir que ver. La app guarda una copia local en tu navegador y puede seguir siendo usada offline despues de la primera carga
 
-**Web publicada:** [rask18.github.io/Schedulime](https://rask18.github.io/Schedulime/)
+**Web publicada:** [disboard.es/Schedulime](https://disboard.es/Schedulime/)
 
 ## Que puedes hacer
 
