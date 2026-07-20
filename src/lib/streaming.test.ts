@@ -23,6 +23,12 @@ describe('streaming helpers', () => {
     );
   });
 
+  it('transliterates accented letters instead of removing them from the slug', () => {
+    expect(buildStreamingSlug('Otome Kaijuu Caraméliser')).toBe(
+      'otome-kaijuu-carameliser'
+    );
+  });
+
   it('builds the final streaming url from the resolved title and episode', () => {
     expect(buildStreamingUrl('ReZero kara Hajimeru-Isekai Seikatsu 4th Season', 2)).toBe(
       'https://animeav1.com/media/rezero-kara-hajimeru-isekai-seikatsu-4th-season/2'

@@ -63,6 +63,8 @@ export const buildStreamingValidationRequestUrl = (
 
 export const buildStreamingSlug = (title: string): string =>
   title
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
     .replace(/[^A-Za-z0-9-\s]/g, '')
     .trim()
     .replace(/\s+/g, '-')
