@@ -1514,13 +1514,13 @@ a {
   }
 
   .anime-topline {
-    gap: 3px;
+    gap: 2px;
   }
 
   .time-chip,
   .metric-pill {
     padding: 4px;
-    font-size: 0.68rem;
+    font-size: 0.76rem;
   }
 
   .metric-pill {
@@ -1530,7 +1530,7 @@ a {
 
 @media (max-width: 1860px) {
   .calendar {
-    grid-template-columns: repeat(7, minmax(210px, 1fr));
+    grid-template-columns: repeat(7, minmax(230px, 1fr));
     overflow-x: auto;
     padding-bottom: 10px;
     scroll-snap-type: x proximity;
@@ -1539,7 +1539,7 @@ a {
   }
 }
 
-@media (max-width: 1592px) {
+@media (max-width: 1732px) {
   .calendar-day-nav {
     position: sticky;
     top: 8px;
