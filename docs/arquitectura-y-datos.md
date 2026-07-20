@@ -259,7 +259,7 @@ Flujo:
 
 1. si el anime tiene `idMal`, la app intenta pedir a Jikan un titulo conveniente;
 2. si falla, usa el titulo de AniList;
-3. con ese titulo genera un slug normalizado, convirtiendo letras con marcas diacriticas a su forma base (`é` a `e`, por ejemplo);
+3. con ese titulo genera un slug normalizado, convirtiendo letras con marcas diacriticas a su forma base (`é` a `e`, por ejemplo) y reduciendo secuencias de espacios o guiones a un unico separador;
 4. construye una URL del tipo `https://animeav1.com/media/<slug>/<episodio>`;
 5. intenta validar la disponibilidad mediante un Cloudflare Worker propio;
 6. el Worker consulta el `__data.json` correspondiente y devuelve de forma transparente el cuerpo y estado HTTP de AnimeAV1;

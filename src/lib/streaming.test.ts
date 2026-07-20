@@ -29,6 +29,16 @@ describe('streaming helpers', () => {
     );
   });
 
+  it('collapses title hyphens and surrounding spaces into one slug separator', () => {
+    expect(
+      buildStreamingSlug(
+        'Honzuki no Gekokujou: Shisho ni Naru Tame ni wa Shudan wo Erandeiraremasen - Ryoushu no Youjo'
+      )
+    ).toBe(
+      'honzuki-no-gekokujou-shisho-ni-naru-tame-ni-wa-shudan-wo-erandeiraremasen-ryoushu-no-youjo'
+    );
+  });
+
   it('builds the final streaming url from the resolved title and episode', () => {
     expect(buildStreamingUrl('ReZero kara Hajimeru-Isekai Seikatsu 4th Season', 2)).toBe(
       'https://animeav1.com/media/rezero-kara-hajimeru-isekai-seikatsu-4th-season/2'

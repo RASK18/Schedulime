@@ -67,7 +67,8 @@ export const buildStreamingSlug = (title: string): string =>
     .replace(/\p{M}/gu, '')
     .replace(/[^A-Za-z0-9-\s]/g, '')
     .trim()
-    .replace(/\s+/g, '-')
+    .replace(/[\s-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
     .toLowerCase();
 
 export const buildStreamingUrl = (title: string, episode: number | null): string | null => {
