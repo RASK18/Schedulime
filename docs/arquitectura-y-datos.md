@@ -262,12 +262,14 @@ Flujo:
 3. con ese titulo genera un slug normalizado;
 4. construye una URL del tipo `https://animeav1.com/media/<slug>/<episodio>`;
 5. intenta validar la disponibilidad mediante un Cloudflare Worker propio;
-6. el Worker consulta el `__data.json` correspondiente y devuelve solo `available`, `missing` o `unknown`.
+6. el Worker consulta el `__data.json` correspondiente y devuelve de forma transparente el cuerpo y estado HTTP de AnimeAV1;
+7. el frontend interpreta ese JSON y considera no disponible cualquier respuesta que contenga un nodo `type: "error"`.
 
-Hay dos caches en memoria por sesion:
+Hay una cache en memoria por sesion:
 
 - cache de titulos resueltos desde Jikan;
-- cache del estado de validacion del enlace.
+
+La validacion de streaming no se cachea ni en el frontend ni en el Worker para que cada apertura consulte y muestre la respuesta actual de AnimeAV1.
 
 Consecuencias practicas:
 

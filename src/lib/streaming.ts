@@ -12,12 +12,26 @@ interface JikanAnimeResponse {
 
 const streamingTitleCache = new Map<number, string>();
 const pendingStreamingTitleRequests = new Map<number, Promise<string | null>>();
-const streamingValidationCache = new Map<string, StreamingValidationState>();
 const pendingStreamingValidations = new Map<string, Promise<StreamingValidationState>>();
 
-interface StreamingValidationResponse {
-  state?: StreamingValidationState;
-}
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const hasStreamingError = (value: unknown): boolean => {
+  if (Array.isArray(value)) {
+    return value.some(hasStreamingError);
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  if (value.type === 'error') {
+    return true;
+  }
+
+  return Object.values(value).some(hasStreamingError);
+};
 
 export const buildStreamingValidationRequestUrl = (
   streamingUrl: string,
@@ -129,25 +143,10 @@ export const resolveStreamingUrl = async (params: {
   };
 };
 
-export const getCachedStreamingValidationState = (
-  streamingUrl: string | null
-): StreamingValidationState => {
-  if (!streamingUrl) {
-    return 'unknown';
-  }
-
-  return streamingValidationCache.get(streamingUrl) ?? 'unknown';
-};
-
 export const validateStreamingUrl = async (
   streamingUrl: string,
   validatorUrl = STREAMING_VALIDATOR_URL
 ): Promise<StreamingValidationState> => {
-  const cached = streamingValidationCache.get(streamingUrl);
-  if (cached) {
-    return cached;
-  }
-
   const pendingRequest = pendingStreamingValidations.get(streamingUrl);
   if (pendingRequest) {
     return pendingRequest;
@@ -163,18 +162,13 @@ export const validateStreamingUrl = async (
       const response = await fetch(validationRequestUrl, {
         cache: 'no-store'
       });
-      const payload = (await response.json()) as StreamingValidationResponse;
-      const validationState =
-        response.ok &&
-        (payload.state === 'available' || payload.state === 'missing' || payload.state === 'unknown')
-          ? payload.state
-          : 'unknown';
+      const payload: unknown = await response.json();
 
-      if (validationState !== 'unknown') {
-        streamingValidationCache.set(streamingUrl, validationState);
+      if (hasStreamingError(payload)) {
+        return 'missing';
       }
 
-      return validationState;
+      return response.ok ? 'available' : 'unknown';
     } catch {
       return 'unknown';
     } finally {

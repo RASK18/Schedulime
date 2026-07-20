@@ -46,7 +46,6 @@ import {
   syncSchedulime
 } from '../lib/sync';
 import {
-  getCachedStreamingValidationState,
   resolveStreamingUrl,
   type StreamingValidationState,
   validateStreamingUrl
@@ -1655,22 +1654,6 @@ const AnimeDetailsDialog = ({
           resolvedTitle: nextResolvedTitle,
           streamingUrl: null,
           validationState: 'unknown'
-        });
-        return;
-      }
-
-      const cachedState = getCachedStreamingValidationState(nextStreamingUrl);
-      setStreamingValidationState(cachedState);
-
-      if (cachedState !== 'unknown') {
-        logStreamingButtonResult({
-          idAniList: entry.anime.id,
-          animeTitle: entry.anime.title,
-          episode: entry.entry.episode,
-          idMal: entry.anime.idMal,
-          resolvedTitle: nextResolvedTitle,
-          streamingUrl: nextStreamingUrl,
-          validationState: cachedState
         });
         return;
       }

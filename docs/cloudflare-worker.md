@@ -1,6 +1,6 @@
 # Validador de streaming en Cloudflare Workers
 
-Schedulime mantiene el frontend en GitHub Pages y utiliza un Cloudflare Worker pequeno para validar la disponibilidad de los enlaces de streaming. El Worker no es un proxy generico: solo acepta un `slug` y un numero de episodio, y siempre consulta el host y la ruta previstos por la aplicacion.
+Schedulime mantiene el frontend en GitHub Pages y utiliza un Cloudflare Worker pequeno para consultar los datos de disponibilidad de los enlaces de streaming. Es un proxy transparente pero no generico: solo acepta un `slug` y un numero de episodio, siempre consulta el host y la ruta previstos por la aplicacion, y devuelve sin interpretar el cuerpo y el estado HTTP de AnimeAV1.
 
 ## Primer despliegue
 
@@ -22,7 +22,7 @@ https://schedulime-streaming-validator.<subdominio>.workers.dev
 El endpoint completo que necesita el frontend es:
 
 ```text
-https://schedulime-streaming-validator.<subdominio>.workers.dev/v1/availability
+https://schedulime-streaming-validator.<subdominio>.workers.dev/v2/availability
 ```
 
 ## Conectar GitHub Pages
@@ -48,7 +48,7 @@ npm run worker:dev
 Crear un archivo `.env.local` con:
 
 ```dotenv
-VITE_STREAMING_VALIDATOR_URL=http://localhost:8787/v1/availability
+VITE_STREAMING_VALIDATOR_URL=http://localhost:8787/v2/availability
 ```
 
 En otra terminal, iniciar la aplicacion:
@@ -64,16 +64,29 @@ El Worker permite los origenes de desarrollo `http://localhost:5173` y `http://l
 Sustituir el subdominio por el asignado por Cloudflare:
 
 ```powershell
-Invoke-RestMethod 'https://schedulime-streaming-validator.<subdominio>.workers.dev/v1/availability?slug=rezero-kara-hajimeru-isekai-seikatsu-4th-season&episode=2'
+Invoke-RestMethod 'https://schedulime-streaming-validator.<subdominio>.workers.dev/v2/availability?slug=rezero-kara-hajimeru-isekai-seikatsu-4th-season&episode=2'
 ```
 
-La respuesta debe contener uno de estos estados:
+La respuesta debe ser el JSON original de AnimeAV1. Por ejemplo, una respuesta con error interno se conserva completa:
 
 ```json
-{ "state": "available" }
+{
+  "type": "data",
+  "nodes": [
+    null,
+    {
+      "type": "error",
+      "error": {
+        "message": "Internal Error"
+      }
+    }
+  ]
+}
 ```
 
-`unknown` indica que el origen no pudo comprobarse o devolvio una respuesta inesperada; no bloquea el enlace en la interfaz.
+El Worker anade las cabeceras `X-Upstream-Status`, `X-Upstream-URL` y `X-Worker-Cache` para facilitar el diagnostico. Actualmente `X-Worker-Cache` siempre es `BYPASS`: cada validacion consulta AnimeAV1 y la respuesta utiliza `Cache-Control: no-store`.
+
+El frontend interpreta el JSON transparente. Cualquier nodo con `type: "error"` se considera no disponible, incluso si AnimeAV1 responde con HTTP 200. Un fallo de red o una respuesta no exitosa sin ese nodo produce estado `unknown` en la interfaz.
 
 ## Despliegues posteriores
 

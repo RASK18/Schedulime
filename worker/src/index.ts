@@ -1,50 +1,20 @@
-type StreamingValidationState = 'available' | 'missing' | 'unknown';
-
-interface WorkerExecutionContext {
-  waitUntil(promise: Promise<unknown>): void;
-}
-
 const ALLOWED_ORIGINS = new Set([
   'https://rask18.github.io',
   'https://disboard.es',
   'http://localhost:4173',
   'http://localhost:5173'
 ]);
-const AVAILABILITY_PATH = '/v1/availability';
+const AVAILABILITY_PATHS = new Set(['/v1/availability', '/v2/availability']);
 const STREAMING_ORIGIN = 'https://animeav1.com';
 const SLUG_PATTERN = /^[a-z0-9-]{1,200}$/;
 const EPISODE_PATTERN = /^[1-9]\d{0,4}$/;
+const EXPOSED_HEADERS = 'X-Upstream-Status, X-Upstream-URL, X-Worker-Cache';
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
-
-const hasMissingStreamingError = (value: unknown): boolean => {
-  if (Array.isArray(value)) {
-    return value.some(hasMissingStreamingError);
-  }
-
-  if (!isRecord(value)) {
-    return false;
-  }
-
-  const error = isRecord(value.error) ? value.error : null;
-  const errorMessage = typeof error?.message === 'string' ? error.message : null;
-
-  if (
-    value.type === 'error' &&
-    (value.status === 404 || errorMessage === 'Episodio no encontrado')
-  ) {
-    return true;
-  }
-
-  return Object.values(value).some(hasMissingStreamingError);
-};
-
-const jsonResponse = (body: unknown, status: number, cacheSeconds = 0): Response =>
+const jsonResponse = (body: unknown, status: number): Response =>
   new Response(JSON.stringify(body), {
     status,
     headers: {
-      'Cache-Control': cacheSeconds > 0 ? `public, max-age=${cacheSeconds}` : 'no-store',
+      'Cache-Control': 'no-store',
       'Content-Type': 'application/json; charset=utf-8',
       'X-Content-Type-Options': 'nosniff'
     }
@@ -57,6 +27,7 @@ const withCors = (response: Response, allowedOrigin: string | null): Response =>
 
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', allowedOrigin);
+  headers.set('Access-Control-Expose-Headers', EXPOSED_HEADERS);
   headers.append('Vary', 'Origin');
 
   return new Response(response.body, {
@@ -66,23 +37,32 @@ const withCors = (response: Response, allowedOrigin: string | null): Response =>
   });
 };
 
-const validationCacheSeconds = (state: StreamingValidationState): number => {
-  switch (state) {
-    case 'available':
-      return 60 * 60;
-    case 'missing':
-      return 5 * 60;
-    default:
-      return 30;
+const buildUpstreamResponse = (
+  upstreamResponse: Response,
+  upstreamUrl: string
+): Response => {
+  const headers = new Headers({
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Upstream-Status': String(upstreamResponse.status),
+    'X-Upstream-URL': upstreamUrl,
+    'X-Worker-Cache': 'BYPASS'
+  });
+  const contentType = upstreamResponse.headers.get('Content-Type');
+
+  if (contentType) {
+    headers.set('Content-Type', contentType);
   }
+
+  return new Response(upstreamResponse.body, {
+    status: upstreamResponse.status,
+    statusText: upstreamResponse.statusText,
+    headers
+  });
 };
 
 const handler = {
-  async fetch(
-    request: Request,
-    _environment: unknown,
-    context: WorkerExecutionContext
-  ): Promise<Response> {
+  async fetch(request: Request): Promise<Response> {
     const requestOrigin = request.headers.get('Origin');
     const allowedOrigin = requestOrigin && ALLOWED_ORIGINS.has(requestOrigin) ? requestOrigin : null;
 
@@ -105,58 +85,60 @@ const handler = {
     }
 
     if (request.method !== 'GET') {
-      return withCors(jsonResponse({ error: 'Method not allowed' }, 405), allowedOrigin);
+      const response = jsonResponse({ error: 'Method not allowed' }, 405);
+      response.headers.set('Allow', 'GET, OPTIONS');
+      return withCors(response, allowedOrigin);
     }
 
     const requestUrl = new URL(request.url);
-    if (requestUrl.pathname !== AVAILABILITY_PATH) {
-      return withCors(jsonResponse({ error: 'Not found' }, 404), allowedOrigin);
+    if (!AVAILABILITY_PATHS.has(requestUrl.pathname)) {
+      return withCors(
+        jsonResponse({ error: 'Not found', pathname: requestUrl.pathname }, 404),
+        allowedOrigin
+      );
     }
 
+    const unexpectedParameter = [...requestUrl.searchParams.keys()].find(
+      (parameter) => parameter !== 'slug' && parameter !== 'episode'
+    );
     const slug = requestUrl.searchParams.get('slug') ?? '';
     const episode = requestUrl.searchParams.get('episode') ?? '';
 
-    if (!SLUG_PATTERN.test(slug) || !EPISODE_PATTERN.test(episode)) {
+    if (unexpectedParameter || !SLUG_PATTERN.test(slug) || !EPISODE_PATTERN.test(episode)) {
       return withCors(jsonResponse({ error: 'Invalid slug or episode' }, 400), allowedOrigin);
     }
 
-    const canonicalUrl = new URL(AVAILABILITY_PATH, requestUrl.origin);
-    canonicalUrl.searchParams.set('slug', slug);
-    canonicalUrl.searchParams.set('episode', episode);
-    const cacheKey = new Request(canonicalUrl, { method: 'GET' });
-    const cache = caches.default;
-    const cachedResponse = await cache.match(cacheKey);
-
-    if (cachedResponse) {
-      return withCors(cachedResponse, allowedOrigin);
-    }
-
-    let state: StreamingValidationState = 'unknown';
+    const upstreamUrl = `${STREAMING_ORIGIN}/media/${encodeURIComponent(slug)}/${episode}/__data.json`;
 
     try {
-      const upstreamUrl = `${STREAMING_ORIGIN}/media/${encodeURIComponent(slug)}/${episode}/__data.json`;
       const upstreamResponse = await fetch(upstreamUrl, {
+        cache: 'no-store',
         headers: {
           Accept: 'application/json'
         },
         redirect: 'manual',
         signal: AbortSignal.timeout(8_000)
       });
-      const payload: unknown = await upstreamResponse.json();
 
-      state = hasMissingStreamingError(payload)
-        ? 'missing'
-        : upstreamResponse.ok
-          ? 'available'
-          : 'unknown';
-    } catch {
-      state = 'unknown';
+      return withCors(buildUpstreamResponse(upstreamResponse, upstreamUrl), allowedOrigin);
+    } catch (error) {
+      const errorName = error instanceof Error ? error.name : 'UnknownError';
+      const isTimeout = errorName === 'TimeoutError';
+      const response = jsonResponse(
+        {
+          type: 'proxy_error',
+          error: {
+            message: isTimeout ? 'AnimeAV1 request timed out' : 'AnimeAV1 request failed',
+            name: errorName
+          }
+        },
+        isTimeout ? 504 : 502
+      );
+      response.headers.set('X-Upstream-URL', upstreamUrl);
+      response.headers.set('X-Worker-Cache', 'BYPASS');
+
+      return withCors(response, allowedOrigin);
     }
-
-    const response = jsonResponse({ state }, 200, validationCacheSeconds(state));
-    context.waitUntil(cache.put(cacheKey, response.clone()));
-
-    return withCors(response, allowedOrigin);
   }
 };
 

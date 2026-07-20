@@ -33,10 +33,10 @@ describe('streaming helpers', () => {
     expect(
       buildStreamingValidationRequestUrl(
         'https://animeav1.com/media/rezero-kara-hajimeru-isekai-seikatsu-4th-season/2',
-        'https://schedulime-streaming-validator.example.workers.dev/v1/availability'
+        'https://schedulime-streaming-validator.example.workers.dev/v2/availability'
       )
     ).toBe(
-      'https://schedulime-streaming-validator.example.workers.dev/v1/availability?slug=rezero-kara-hajimeru-isekai-seikatsu-4th-season&episode=2'
+      'https://schedulime-streaming-validator.example.workers.dev/v2/availability?slug=rezero-kara-hajimeru-isekai-seikatsu-4th-season&episode=2'
     );
   });
 
@@ -44,14 +44,46 @@ describe('streaming helpers', () => {
     expect(
       buildStreamingValidationRequestUrl(
         'https://example.com/media/test/1',
-        'https://schedulime-streaming-validator.example.workers.dev/v1/availability'
+        'https://schedulime-streaming-validator.example.workers.dev/v2/availability'
       )
     ).toBeNull();
   });
 
-  it('uses the state returned by the Worker validator', async () => {
+  it('marks a transparent upstream payload containing an error as missing', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ state: 'missing' }), {
+      new Response(
+        JSON.stringify({
+          type: 'data',
+          nodes: [
+            null,
+            { type: 'data', data: [{ user: 1 }, null] },
+            { type: 'error', error: { message: 'Internal Error' } }
+          ]
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+    );
+
+    await expect(
+      validateStreamingUrl(
+        'https://animeav1.com/media/worker-validation-test/7',
+        'https://schedulime-streaming-validator.example.workers.dev/v2/availability'
+      )
+    ).resolves.toBe('missing');
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://schedulime-streaming-validator.example.workers.dev/v2/availability?slug=worker-validation-test&episode=7',
+      { cache: 'no-store' }
+    );
+  });
+
+  it('marks an error-free transparent upstream payload as available', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ type: 'data', nodes: [null, { type: 'data' }] }), {
         status: 200,
         headers: {
           'Content-Type': 'application/json'
@@ -61,14 +93,29 @@ describe('streaming helpers', () => {
 
     await expect(
       validateStreamingUrl(
-        'https://animeav1.com/media/worker-validation-test/7',
-        'https://schedulime-streaming-validator.example.workers.dev/v1/availability'
+        'https://animeav1.com/media/worker-available-test/8',
+        'https://schedulime-streaming-validator.example.workers.dev/v2/availability'
       )
-    ).resolves.toBe('missing');
-    expect(fetchSpy).toHaveBeenCalledWith(
-      'https://schedulime-streaming-validator.example.workers.dev/v1/availability?slug=worker-validation-test&episode=7',
-      { cache: 'no-store' }
+    ).resolves.toBe('available');
+  });
+
+  it('does not cache completed streaming validations', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+      new Response(JSON.stringify({ type: 'data', nodes: [null, { type: 'data' }] }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
     );
+    const streamingUrl = 'https://animeav1.com/media/non-cached-validation-test/9';
+    const validatorUrl =
+      'https://schedulime-streaming-validator.example.workers.dev/v2/availability';
+
+    await validateStreamingUrl(streamingUrl, validatorUrl);
+    await validateStreamingUrl(streamingUrl, validatorUrl);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   it('uses the Jikan title when it is available', async () => {
