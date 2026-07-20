@@ -1773,6 +1773,20 @@ const AnimeDetailsDialog = ({
               <a href={entry.anime.siteUrl} className="link-button" target="_blank" rel="noreferrer">
                 AniList
               </a>
+              {entry.anime.idMal ? (
+                <a
+                  href={`https://myanimelist.net/anime/${entry.anime.idMal}`}
+                  className="link-button"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  MyAnimeList
+                </a>
+              ) : (
+                <button type="button" className="link-button disabled" disabled>
+                  MyAnimeList
+                </button>
+              )}
             </div>
 
             <div className="anime-topline">
