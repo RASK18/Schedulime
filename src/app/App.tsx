@@ -443,11 +443,16 @@ const RefreshIcon = ({ className }: { className?: string }): JSX.Element => (
   </IconBase>
 );
 
-const MoreHorizontalIcon = ({ className }: { className?: string }): JSX.Element => (
+const ListChecksIcon = ({ className }: { className?: string }): JSX.Element => (
   <IconBase className={className}>
-    <circle cx="5" cy="12" r="1.8" fill="currentColor" />
-    <circle cx="12" cy="12" r="1.8" fill="currentColor" />
-    <circle cx="19" cy="12" r="1.8" fill="currentColor" />
+    <path
+      d="m3.5 7 1.6 1.6L8 5.7M11 7h9M3.5 13l1.6 1.6L8 11.7M11 13h9M11 19h9"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </IconBase>
 );
 
@@ -579,7 +584,7 @@ const DecisionSummaryIcon = ({
   decision: DecisionKind | null;
   className?: string;
 }): JSX.Element =>
-  decision ? <DecisionIcon decision={decision} className={className} /> : <MoreHorizontalIcon className={className} />;
+  decision ? <DecisionIcon decision={decision} className={className} /> : <ListChecksIcon className={className} />;
 
 const getDecisionButtonClassName = (decision: DecisionKind | null): string => {
   if (decision === 'watching') {
@@ -1200,6 +1205,7 @@ const App = (): JSX.Element => {
             onClick={handleManualSync}
             disabled={syncing}
                 title="Actualizar semana"
+                data-tooltip="Actualizar semana"
                 aria-label="Actualizar semana"
           >
             <RefreshIcon className={syncing ? 'refresh-icon spinning' : 'refresh-icon'} />
@@ -1209,6 +1215,7 @@ const App = (): JSX.Element => {
             className="ghost-button hero-icon-button"
             onClick={() => setSettingsOpen(true)}
             title="Configuración"
+            data-tooltip="Configuración"
             aria-label="Configuración"
           >
             <SettingsIcon className="ui-icon" />
@@ -1221,6 +1228,7 @@ const App = (): JSX.Element => {
             aria-label={`Ignorados (${deferredCalendarView.ignoredEntries.length})`}
           >
             <EyeOffIcon className="ui-icon" />
+            <span className="ignored-trigger-label">Ignorados</span>
             <span>({deferredCalendarView.ignoredEntries.length})</span>
           </button>
             </>
@@ -1484,10 +1492,12 @@ const AnimeCard = ({
   const scoreColor = getScoreColor(entry.anime.averageScore);
   const handleDecisionSelect = (decision: DecisionKind): void => {
     onMenuToggle(null);
-    void onDecisionChange(
-      entry.anime.id,
-      entry.decision === decision ? null : decision
-    );
+    void onDecisionChange(entry.anime.id, decision);
+  };
+
+  const handleDecisionReset = (): void => {
+    onMenuToggle(null);
+    void onDecisionChange(entry.anime.id, null);
   };
 
   return (
@@ -1513,6 +1523,7 @@ const AnimeCard = ({
             <span
               className="cover-recommendation-badge"
               title={recommendationLabels[entry.recommendationReason]}
+              data-tooltip={recommendationLabels[entry.recommendationReason]}
               aria-label={recommendationLabels[entry.recommendationReason]}
             >
               <RecommendationBadgeIcon reason={entry.recommendationReason} />
@@ -1538,7 +1549,10 @@ const AnimeCard = ({
                 className={getDecisionButtonClassName(entry.decision)}
                 onClick={() => onMenuToggle(isMenuOpen ? null : entry.entry.key)}
                 title={getDecisionSummaryLabel(entry.decision)}
+                data-tooltip={getDecisionSummaryLabel(entry.decision)}
                 aria-label={getDecisionSummaryLabel(entry.decision)}
+                aria-haspopup="menu"
+                aria-expanded={isMenuOpen}
               >
                 <DecisionSummaryIcon decision={entry.decision} className="ui-icon" />
               </button>
@@ -1551,12 +1565,27 @@ const AnimeCard = ({
                       type="button"
                       className={getDecisionMenuOptionClassName(entry.decision, decision)}
                       onClick={() => handleDecisionSelect(decision)}
-                      title={decisionLabels[decision]}
-                      aria-label={decisionLabels[decision]}
+                      role="menuitemradio"
+                      aria-checked={entry.decision === decision}
                     >
                       <DecisionIcon decision={decision} className="ui-icon" />
+                      <span>{decisionLabels[decision]}</span>
+                      {entry.decision === decision ? (
+                        <span className="decision-menu-selected" aria-hidden="true">✓</span>
+                      ) : null}
                     </button>
                   ))}
+                  {entry.decision ? (
+                    <button
+                      type="button"
+                      className="decision-menu-option decision-menu-option-reset"
+                      onClick={handleDecisionReset}
+                      role="menuitem"
+                    >
+                      <RotateCcwIcon className="ui-icon" />
+                      <span>Quitar estado</span>
+                    </button>
+                  ) : null}
                 </div>
               )}
             </div>
