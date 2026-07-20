@@ -630,6 +630,7 @@ a {
 }
 
 .calendar {
+  z-index: 2;
   margin-top: 22px;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
