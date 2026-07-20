@@ -4,7 +4,7 @@ const ALLOWED_ORIGINS = new Set([
   'http://localhost:4173',
   'http://localhost:5173'
 ]);
-const AVAILABILITY_PATHS = new Set(['/v1/availability', '/v2/availability']);
+const AVAILABILITY_PATH = '/v2/availability';
 const STREAMING_ORIGIN = 'https://animeav1.com';
 const SLUG_PATTERN = /^[a-z0-9-]{1,200}$/;
 const EPISODE_PATTERN = /^[1-9]\d{0,4}$/;
@@ -91,7 +91,7 @@ const handler = {
     }
 
     const requestUrl = new URL(request.url);
-    if (!AVAILABILITY_PATHS.has(requestUrl.pathname)) {
+    if (requestUrl.pathname !== AVAILABILITY_PATH) {
       return withCors(
         jsonResponse({ error: 'Not found', pathname: requestUrl.pathname }, 404),
         allowedOrigin

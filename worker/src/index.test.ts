@@ -41,6 +41,18 @@ describe('streaming proxy Worker', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it('does not support the retired v1 endpoint', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    const response = await worker.fetch(
+      new Request(
+        'https://worker.example/v1/availability?slug=saikyou-degarashi-ouji-no-anyaku-teii-arasoi&episode=3'
+      )
+    );
+
+    expect(response.status).toBe(404);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it('rejects browser origins outside the allowlist', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const response = await worker.fetch(
