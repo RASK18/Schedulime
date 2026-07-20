@@ -6,6 +6,7 @@ interface WorkerExecutionContext {
 
 const ALLOWED_ORIGINS = new Set([
   'https://rask18.github.io',
+  'https://disboard.es',
   'http://localhost:4173',
   'http://localhost:5173'
 ]);

@@ -57,7 +57,7 @@ En otra terminal, iniciar la aplicacion:
 npm run dev
 ```
 
-El Worker permite los origenes de desarrollo `http://localhost:5173` y `http://localhost:4173`, ademas del origen de produccion `https://rask18.github.io`.
+El Worker permite los origenes de desarrollo `http://localhost:5173` y `http://localhost:4173`, ademas de los origenes de produccion `https://rask18.github.io` y `https://disboard.es`.
 
 ## Prueba rapida
 
