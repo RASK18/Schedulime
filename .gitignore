@@ -355,3 +355,6 @@ node_modules/
 dist/
 .npm-cache/
 *.tsbuildinfo
+.dev.vars
+.env.local
+.env.*.local

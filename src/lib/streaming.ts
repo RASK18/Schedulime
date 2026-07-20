@@ -1,6 +1,6 @@
 const STREAMING_BASE_URL = 'https://animeav1.com/media';
 const JIKAN_API_BASE_URL = 'https://api.jikan.moe/v4/anime';
-const CORS_PROXY_PREFIX = 'https://corsproxy.io/?url=';
+const STREAMING_VALIDATOR_URL = import.meta.env.VITE_STREAMING_VALIDATOR_URL?.trim() ?? '';
 
 export type StreamingValidationState = 'available' | 'missing' | 'unknown';
 
@@ -15,33 +15,37 @@ const pendingStreamingTitleRequests = new Map<number, Promise<string | null>>();
 const streamingValidationCache = new Map<string, StreamingValidationState>();
 const pendingStreamingValidations = new Map<string, Promise<StreamingValidationState>>();
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
+interface StreamingValidationResponse {
+  state?: StreamingValidationState;
+}
 
-const hasMissingStreamingError = (value: unknown): boolean => {
-  if (Array.isArray(value)) {
-    return value.some(hasMissingStreamingError);
+export const buildStreamingValidationRequestUrl = (
+  streamingUrl: string,
+  validatorUrl: string
+): string | null => {
+  if (!validatorUrl.trim()) {
+    return null;
   }
 
-  if (!isRecord(value)) {
-    return false;
+  try {
+    const parsedStreamingUrl = new URL(streamingUrl);
+    const pathMatch = /^\/media\/([a-z0-9-]{1,200})\/([1-9]\d{0,4})\/?$/.exec(
+      parsedStreamingUrl.pathname
+    );
+
+    if (parsedStreamingUrl.origin !== 'https://animeav1.com' || !pathMatch) {
+      return null;
+    }
+
+    const requestUrl = new URL(validatorUrl);
+    requestUrl.searchParams.set('slug', pathMatch[1]);
+    requestUrl.searchParams.set('episode', pathMatch[2]);
+
+    return requestUrl.toString();
+  } catch {
+    return null;
   }
-
-  const error = isRecord(value.error) ? value.error : null;
-  const errorMessage = typeof error?.message === 'string' ? error.message : null;
-
-  if (
-    value.type === 'error' &&
-    (value.status === 404 || errorMessage === 'Episodio no encontrado')
-  ) {
-    return true;
-  }
-
-  return Object.values(value).some(hasMissingStreamingError);
 };
-
-const getStreamingValidationUrl = (streamingUrl: string): string =>
-  `${CORS_PROXY_PREFIX}${encodeURIComponent(`${streamingUrl}/__data.json`)}`;
 
 export const buildStreamingSlug = (title: string): string =>
   title
@@ -135,7 +139,10 @@ export const getCachedStreamingValidationState = (
   return streamingValidationCache.get(streamingUrl) ?? 'unknown';
 };
 
-export const validateStreamingUrl = async (streamingUrl: string): Promise<StreamingValidationState> => {
+export const validateStreamingUrl = async (
+  streamingUrl: string,
+  validatorUrl = STREAMING_VALIDATOR_URL
+): Promise<StreamingValidationState> => {
   const cached = streamingValidationCache.get(streamingUrl);
   if (cached) {
     return cached;
@@ -148,14 +155,19 @@ export const validateStreamingUrl = async (streamingUrl: string): Promise<Stream
 
   const request = (async () => {
     try {
-      const response = await fetch(getStreamingValidationUrl(streamingUrl), {
+      const validationRequestUrl = buildStreamingValidationRequestUrl(streamingUrl, validatorUrl);
+      if (!validationRequestUrl) {
+        return 'unknown';
+      }
+
+      const response = await fetch(validationRequestUrl, {
         cache: 'no-store'
       });
-      const payload = await response.json();
-      const validationState = hasMissingStreamingError(payload)
-        ? 'missing'
-        : response.ok
-          ? 'available'
+      const payload = (await response.json()) as StreamingValidationResponse;
+      const validationState =
+        response.ok &&
+        (payload.state === 'available' || payload.state === 'missing' || payload.state === 'unknown')
+          ? payload.state
           : 'unknown';
 
       if (validationState !== 'unknown') {

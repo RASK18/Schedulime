@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   buildStreamingSlug,
+  buildStreamingValidationRequestUrl,
   buildStreamingUrl,
   resolveStreamingTitle,
-  resolveStreamingUrl
+  resolveStreamingUrl,
+  validateStreamingUrl
 } from './streaming';
 
 describe('streaming helpers', () => {
@@ -24,6 +26,48 @@ describe('streaming helpers', () => {
   it('builds the final streaming url from the resolved title and episode', () => {
     expect(buildStreamingUrl('ReZero kara Hajimeru-Isekai Seikatsu 4th Season', 2)).toBe(
       'https://animeav1.com/media/rezero-kara-hajimeru-isekai-seikatsu-4th-season/2'
+    );
+  });
+
+  it('builds a closed Worker validation request from a streaming url', () => {
+    expect(
+      buildStreamingValidationRequestUrl(
+        'https://animeav1.com/media/rezero-kara-hajimeru-isekai-seikatsu-4th-season/2',
+        'https://schedulime-streaming-validator.example.workers.dev/v1/availability'
+      )
+    ).toBe(
+      'https://schedulime-streaming-validator.example.workers.dev/v1/availability?slug=rezero-kara-hajimeru-isekai-seikatsu-4th-season&episode=2'
+    );
+  });
+
+  it('does not send unrelated urls to the Worker', () => {
+    expect(
+      buildStreamingValidationRequestUrl(
+        'https://example.com/media/test/1',
+        'https://schedulime-streaming-validator.example.workers.dev/v1/availability'
+      )
+    ).toBeNull();
+  });
+
+  it('uses the state returned by the Worker validator', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ state: 'missing' }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+    );
+
+    await expect(
+      validateStreamingUrl(
+        'https://animeav1.com/media/worker-validation-test/7',
+        'https://schedulime-streaming-validator.example.workers.dev/v1/availability'
+      )
+    ).resolves.toBe('missing');
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://schedulime-streaming-validator.example.workers.dev/v1/availability?slug=worker-validation-test&episode=7',
+      { cache: 'no-store' }
     );
   });
 

@@ -261,7 +261,8 @@ Flujo:
 2. si falla, usa el titulo de AniList;
 3. con ese titulo genera un slug normalizado;
 4. construye una URL del tipo `https://animeav1.com/media/<slug>/<episodio>`;
-5. intenta validar la disponibilidad consultando `__data.json` a traves de `corsproxy.io`.
+5. intenta validar la disponibilidad mediante un Cloudflare Worker propio;
+6. el Worker consulta el `__data.json` correspondiente y devuelve solo `available`, `missing` o `unknown`.
 
 Hay dos caches en memoria por sesion:
 
@@ -273,6 +274,7 @@ Consecuencias practicas:
 - no todo anime tendra enlace;
 - un enlace puede abrirse incluso con estado `unknown` si la URL es construible;
 - si la validacion detecta episodio inexistente, el boton se deshabilita;
+- el Worker solo acepta slugs y episodios validos, por lo que no funciona como proxy abierto;
 - este mecanismo es una ayuda auxiliar, no una garantia de disponibilidad.
 
 ## Renderizado y reactividad

@@ -41,6 +41,8 @@ jobs:
           echo "APP_UPDATED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
 
       - name: Build
+        env:
+          VITE_STREAMING_VALIDATOR_URL: ${{ vars.VITE_STREAMING_VALIDATOR_URL }}
         run: npm run build
 
       - name: Upload Pages artifact
