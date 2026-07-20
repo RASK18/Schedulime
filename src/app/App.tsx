@@ -1768,7 +1768,7 @@ const AnimeDetailsDialog = ({
                 </button>
               )}
               <a href={animeav1Url} className="link-button" target="_blank" rel="noreferrer">
-                Animeav1
+                AnimeAV1
               </a>
               <a href={entry.anime.siteUrl} className="link-button" target="_blank" rel="noreferrer">
                 AniList
