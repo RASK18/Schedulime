@@ -815,6 +815,8 @@ a {
 
 .anime-card {
   --accent-color: rgba(61, 180, 242, 0.5);
+  --score-color: var(--success);
+  position: relative;
   display: grid;
   gap: 8px;
   width: 100%;
@@ -830,6 +832,56 @@ a {
 .anime-card.recommended {
   border-color: transparent;
   box-shadow: none;
+}
+
+.anime-card.score-good .metric-pill {
+  background: color-mix(in srgb, var(--score-color) 16%, var(--surface-muted));
+  border-color: color-mix(in srgb, var(--score-color) 48%, var(--surface-border));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--score-color) 14%, transparent);
+  font-weight: 800;
+}
+
+.anime-card.score-excellent::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  right: -7px;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--score-color);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--score-color) 46%, transparent);
+  pointer-events: none;
+}
+
+.anime-card.score-excellent .anime-media {
+  border-radius: 10px;
+  background: linear-gradient(
+    270deg,
+    color-mix(in srgb, var(--score-color) 11%, transparent),
+    transparent 92%
+  );
+}
+
+.anime-card.score-excellent .cover-button {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--score-color) 52%, transparent),
+    0 0 11px color-mix(in srgb, var(--score-color) 18%, transparent);
+}
+
+.anime-card.score-excellent .metric-pill {
+  background: color-mix(in srgb, var(--score-color) 24%, var(--surface-muted));
+  border-color: color-mix(in srgb, var(--score-color) 68%, var(--surface-border));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--score-color) 24%, transparent);
+  font-weight: 800;
+}
+
+.anime-card.score-good .metric-pill,
+.anime-card.score-excellent .metric-pill {
+  min-width: 34px;
+  padding: 3px 4px;
+  border-radius: 7px;
+  font-size: 0.72rem;
 }
 
 .anime-media {

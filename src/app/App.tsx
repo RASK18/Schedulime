@@ -1485,11 +1485,23 @@ const AnimeCard = ({
   onDecisionChange: (mediaId: number, decision: DecisionKind | null) => Promise<void>;
   onOpenDetails: (entry: CalendarEntryViewModel | null) => void;
 }): JSX.Element => {
-  const accentStyle = entry.anime.coverColor
-    ? ({ '--accent-color': entry.anime.coverColor } as CSSProperties)
-    : undefined;
   const scoreLabel = formatAnimeMetric(entry.anime.averageScore, 'score');
   const scoreColor = getScoreColor(entry.anime.averageScore);
+  const cardStyle = {
+    ...(entry.anime.coverColor ? { '--accent-color': entry.anime.coverColor } : {}),
+    ...(scoreColor ? { '--score-color': scoreColor } : {})
+  } as CSSProperties;
+  const scoreEmphasisClass =
+    entry.anime.averageScore !== null && entry.anime.averageScore >= 80
+      ? 'score-excellent'
+      : entry.anime.averageScore !== null && entry.anime.averageScore >= 75
+        ? 'score-good'
+        : null;
+  const cardClassName = [
+    'anime-card',
+    entry.isRecommended ? 'recommended' : null,
+    scoreEmphasisClass
+  ].filter(Boolean).join(' ');
   const handleDecisionSelect = (decision: DecisionKind): void => {
     onMenuToggle(null);
     void onDecisionChange(entry.anime.id, decision);
@@ -1501,7 +1513,7 @@ const AnimeCard = ({
   };
 
   return (
-    <article className={entry.isRecommended ? 'anime-card recommended' : 'anime-card'} style={accentStyle}>
+    <article className={cardClassName} style={cardStyle}>
       <div className="anime-media">
         <button
           type="button"
