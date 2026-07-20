@@ -1,18 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Schedulime</title>
+  <desc id="description">Hoja de lima verde sobre un fondo oscuro</desc>
   <defs>
-    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
-      <stop offset="0%" stop-color="#f7b267" />
-      <stop offset="100%" stop-color="#de6a2d" />
+    <linearGradient id="background" x1="70" y1="58" x2="442" y2="454" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#172330" />
+      <stop offset="1" stop-color="#0b1118" />
+    </linearGradient>
+    <linearGradient id="leaf" x1="151" y1="398" x2="386" y2="105" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#75c92f" />
+      <stop offset="0.55" stop-color="#8fda32" />
+      <stop offset="1" stop-color="#b5ee43" />
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="#1b1613" />
-  <rect x="34" y="34" width="444" height="444" rx="92" fill="url(#bg)" />
+
+  <rect width="512" height="512" fill="url(#background)" />
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#96dc38" stroke-opacity="0.12" stroke-width="8" />
+
   <path
-    d="M120 168h272M120 256h272M120 344h172"
-    fill="none"
-    stroke="#fff6ea"
-    stroke-linecap="round"
-    stroke-width="34"
+    d="M137 395C155 272 225 153 389 103C383 233 316 348 171 409C154 416 140 409 137 395Z"
+    fill="url(#leaf)"
+    stroke="#c3f25c"
+    stroke-width="4"
+    stroke-linejoin="round"
   />
-  <circle cx="374" cy="344" r="44" fill="#fff6ea" />
+  <path
+    d="M166 401C213 331 256 260 301 194C326 157 351 128 379 108C347 149 321 198 299 250C271 316 229 372 178 409Z"
+    fill="#0d151c"
+  />
 </svg>

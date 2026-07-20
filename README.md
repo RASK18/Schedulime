@@ -87,3 +87,7 @@ Scripts disponibles:
 ## Licencia
 
 [GNU Affero General Public License v3.0](LICENSE)
+
+### Licencias de terceros
+
+- Los iconos de la interfaz proceden de [Lucide](https://lucide.dev/) y se distribuyen bajo la [licencia ISC](https://github.com/lucide-icons/lucide/blob/main/LICENSE).

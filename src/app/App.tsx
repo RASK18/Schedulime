@@ -9,6 +9,20 @@ import {
   type FormEvent,
   type ReactNode
 } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Eye,
+  EyeOff,
+  ListChecks,
+  Menu,
+  RefreshCw,
+  Settings as SettingsIcon,
+  SkipBack,
+  Star,
+  Undo2
+} from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import {
   APP_VERSION,
@@ -21,6 +35,8 @@ import {
 } from '../types';
 import { buildCalendarView } from '../lib/recommendations';
 import {
+  formatDateLabel,
+  formatDayLabel,
   formatTimeLabel,
   formatLastUpdatedLabel,
   formatWeekRangeLabel,
@@ -283,7 +299,7 @@ const getDecisionSummaryLabel = (decision: DecisionKind | null): string =>
 
 const getIgnoredSourceLabel = (entry: CalendarEntryViewModel): string => {
   if (entry.ignoredSource === 'manual') {
-    return '';
+    return 'Ignorado manualmente';
   }
 
   if (entry.autoIgnoreReason === 'low-score') {
@@ -305,258 +321,16 @@ const getIgnoredSourceLabel = (entry: CalendarEntryViewModel): string => {
   return 'Ignorado';
 };
 
-const IconBase = ({
-  children,
-  className,
-  viewBox = '0 0 24 24'
-}: {
-  children: ReactNode;
-  className?: string;
-  viewBox?: string;
-}): JSX.Element => (
-  <svg viewBox={viewBox} aria-hidden="true" className={className ?? 'ui-icon'}>
-    {children}
-  </svg>
-);
-
-const EyeIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.9" />
-  </IconBase>
-);
-
-const HelpIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.9" />
-    <path
-      d="M9.4 9.2a2.8 2.8 0 0 1 5.2 1.4c0 2-2.6 2.4-2.6 4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <circle cx="12" cy="17.2" r="1" fill="currentColor" />
-  </IconBase>
-);
-
-const EyeOffIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="M3 3l18 18"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M10.6 5.4A10.8 10.8 0 0 1 12 5.3c6 0 9.5 6.7 9.5 6.7a16.7 16.7 0 0 1-3.3 4.1"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M6.5 7.4A17 17 0 0 0 2.5 12s3.5 6.7 9.5 6.7c1 0 1.9-.2 2.8-.5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M10.6 10.6A3 3 0 0 0 13.4 13.4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </IconBase>
-);
-
-const RotateCcwIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="M8 7H4v4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M4 11a8 8 0 1 0 2.3-5.7L8 7"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </IconBase>
-);
-
-const RefreshIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="M3 12a9 9 0 0 1 15-6.7L21 8"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.85"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M21 3v5h-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.85"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M21 12a9 9 0 0 1-15 6.7L3 16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.85"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M3 21v-5h5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.85"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </IconBase>
-);
-
-const ListChecksIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="m3.5 7 1.6 1.6L8 5.7M11 7h9M3.5 13l1.6 1.6L8 11.7M11 13h9M11 19h9"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </IconBase>
-);
-
-const MenuIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="M4 7h16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M4 12h16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M4 17h16"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </IconBase>
-);
-
-const ChevronLeftIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="M14.5 6 8.5 12l6 6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </IconBase>
-);
-
-const ChevronRightIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="m9.5 6 6 6-6 6"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.9"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </IconBase>
-);
-
-const SettingsIcon = ({ className }: { className?: string }): JSX.Element => (
-  <IconBase className={className}>
-    <path
-      d="M12 3.5 14 5l2.4-.4.9 2.2L19.5 8l-.4 2.4 1.4 1.6-1.4 1.6.4 2.4-2.2 1.2-.9 2.2L14 19l-2 1.5L10 19l-2.4.4-.9-2.2L4.5 16l.4-2.4L3.5 12l1.4-1.6L4.5 8l2.2-1.2.9-2.2L10 5l2-1.5Z"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <circle cx="12" cy="12" r="2.8" fill="none" stroke="currentColor" strokeWidth="1.7" />
-  </IconBase>
-);
-
 const RecommendationBadgeIcon = ({
   reason
 }: {
   reason: NonNullable<CalendarEntryViewModel['recommendationReason']>;
 }): JSX.Element => {
   if (reason === 'continuation') {
-    return (
-      <IconBase className="badge-icon">
-        <path
-          d="M5 7h4v10H5zM11 12l8-5v10l-8-5Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </IconBase>
-    );
+    return <SkipBack className="badge-icon" />;
   }
 
-  return (
-    <IconBase className="badge-icon">
-      <path
-        d="m12 3 2.7 5.5 6 .9-4.4 4.3 1 6-5.3-2.8-5.3 2.8 1-6L3.3 9.4l6-.9L12 3Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </IconBase>
-  );
+  return <Star className="badge-icon" />;
 };
 
 const DecisionIcon = ({
@@ -567,14 +341,14 @@ const DecisionIcon = ({
   className?: string;
 }): JSX.Element => {
   if (decision === 'watching') {
-    return <EyeIcon className={className} />;
+    return <Eye className={className} />;
   }
 
   if (decision === 'unsure') {
-    return <HelpIcon className={className} />;
+    return <CircleHelp className={className} />;
   }
 
-  return <EyeOffIcon className={className} />;
+  return <EyeOff className={className} />;
 };
 
 const DecisionSummaryIcon = ({
@@ -584,7 +358,7 @@ const DecisionSummaryIcon = ({
   decision: DecisionKind | null;
   className?: string;
 }): JSX.Element =>
-  decision ? <DecisionIcon decision={decision} className={className} /> : <ListChecksIcon className={className} />;
+  decision ? <DecisionIcon decision={decision} className={className} /> : <ListChecks className={className} />;
 
 const getDecisionButtonClassName = (decision: DecisionKind | null): string => {
   if (decision === 'watching') {
@@ -1108,7 +882,7 @@ const App = (): JSX.Element => {
             aria-label="Ir a la semana anterior"
             title="Semana anterior"
           >
-            <ChevronLeftIcon className="ui-icon" />
+            <ChevronLeft className="ui-icon" />
           </button>
 
           <div className="week-switcher-copy">
@@ -1125,7 +899,7 @@ const App = (): JSX.Element => {
             aria-label="Ir a la semana siguiente"
             title="Semana siguiente"
           >
-            <ChevronRightIcon className="ui-icon" />
+            <ChevronRight className="ui-icon" />
           </button>
         </div>
 
@@ -1142,7 +916,7 @@ const App = (): JSX.Element => {
                 aria-expanded={mobileActionsOpen}
                 aria-controls="mobile-actions-menu"
               >
-                <MenuIcon className="ui-icon" />
+                <Menu className="ui-icon" />
               </button>
 
               {mobileActionsOpen && (
@@ -1158,7 +932,7 @@ const App = (): JSX.Element => {
                     role="menuitem"
                   >
                     <span className="mobile-actions-item-copy">
-                      <RefreshIcon className={syncing ? 'refresh-icon spinning' : 'refresh-icon'} />
+                      <RefreshCw className={syncing ? 'refresh-icon spinning' : 'refresh-icon'} />
                       <span>Actualizar</span>
                     </span>
                   </button>
@@ -1186,7 +960,7 @@ const App = (): JSX.Element => {
                     role="menuitem"
                   >
                     <span className="mobile-actions-item-copy">
-                      <EyeOffIcon className="ui-icon" />
+                      <EyeOff className="ui-icon" />
                       <span>Ignorados</span>
                     </span>
                     <span className="mobile-actions-item-meta">
@@ -1208,7 +982,7 @@ const App = (): JSX.Element => {
                 data-tooltip="Actualizar semana"
                 aria-label="Actualizar semana"
           >
-            <RefreshIcon className={syncing ? 'refresh-icon spinning' : 'refresh-icon'} />
+            <RefreshCw className={syncing ? 'refresh-icon spinning' : 'refresh-icon'} />
           </button>
           <button
             type="button"
@@ -1227,7 +1001,7 @@ const App = (): JSX.Element => {
             title={`Ignorados (${deferredCalendarView.ignoredEntries.length})`}
             aria-label={`Ignorados (${deferredCalendarView.ignoredEntries.length})`}
           >
-            <EyeOffIcon className="ui-icon" />
+            <EyeOff className="ui-icon" />
             <span className="ignored-trigger-label">Ignorados</span>
             <span>({deferredCalendarView.ignoredEntries.length})</span>
           </button>
@@ -1594,7 +1368,7 @@ const AnimeCard = ({
                       onClick={handleDecisionReset}
                       role="menuitem"
                     >
-                      <RotateCcwIcon className="ui-icon" />
+                      <Undo2 className="ui-icon" />
                       <span>Quitar estado</span>
                     </button>
                   ) : null}
@@ -1640,7 +1414,7 @@ const AnimeCard = ({
             title="Quitar selección"
             aria-label="Quitar selección"
           >
-            <RotateCcwIcon className="ui-icon" />
+            <Undo2 className="ui-icon" />
           </button>
         )}
       </div>
@@ -2016,97 +1790,139 @@ const IgnoredDialog = ({
   onClose: () => void;
   onOpenDetails: (entry: CalendarEntryViewModel | null) => void;
   onRestore: (entry: CalendarEntryViewModel) => void;
-}): JSX.Element => (
-  <div className="modal-shell" role="dialog" aria-modal="true" onClick={onClose}>
-    <div className="modal-card ignored-modal-card" onClick={(event) => event.stopPropagation()}>
-      <div className="ignored-modal-scroll">
-      <header className="modal-header">
-        <div>
-          <p className="eyebrow">Recuperación rápida</p>
-          <h2>Animes ignorados</h2>
-          <p className="ignored-dialog-note">
-              Los autoignorados se restaurarán como <strong>Dudando</strong>.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="ghost-button modal-close-button"
-          aria-label="Cerrar"
-          title="Cerrar"
-          onClick={onClose}
-        >
-          &times;
-        </button>
-      </header>
+}): JSX.Element => {
+  const groupsByWeekday = new Map<number, CalendarEntryViewModel[]>();
 
-      {entries.length === 0 ? (
-        <div className="empty-state small">
-          <p>No hay animes ignorados esta semana.</p>
-        </div>
-      ) : (
-        <div className="ignored-list">
-          {entries.map((entry) => {
-            const scoreLabel = formatAnimeMetric(entry.anime.averageScore, 'score');
-            const scoreColor = getScoreColor(entry.anime.averageScore);
+  entries.forEach((entry) => {
+    const groupEntries = groupsByWeekday.get(entry.weekdayIndex) ?? [];
+    groupEntries.push(entry);
+    groupsByWeekday.set(entry.weekdayIndex, groupEntries);
+  });
 
-            return (
-              <div key={entry.anime.id} className="ignored-item">
-                <div className="ignored-item-main">
-                  <button
-                    type="button"
-                    className="ignored-cover-frame ignored-detail-trigger"
-                    onClick={() => onOpenDetails(entry)}
-                    aria-label={`Abrir detalles de ${entry.anime.title}`}
-                  >
-                    {entry.anime.coverImage ? (
-                      <img
-                        src={entry.anime.coverImage}
-                        alt={entry.anime.title}
-                        loading="lazy"
-                        className="cover-image"
-                      />
-                    ) : (
-                      <div className="cover-fallback">{entry.anime.title.slice(0, 1)}</div>
-                    )}
-                  </button>
-                  <div className="ignored-copy">
-                    <button
-                      type="button"
-                      className="ignored-title-button"
-                      onClick={() => onOpenDetails(entry)}
-                    >
-                      {entry.anime.title}
-                    </button>
-                    {getIgnoredSourceLabel(entry) ? (
-                      <p className="ignored-reason">{getIgnoredSourceLabel(entry)}</p>
-                    ) : null}
+  const ignoredDayGroups = Array.from(groupsByWeekday.entries())
+    .sort(([leftIndex], [rightIndex]) => leftIndex - rightIndex)
+    .map(([weekdayIndex, groupEntries]) => ({
+      weekdayIndex,
+      entries: groupEntries.sort((left, right) => left.entry.airingAt - right.entry.airingAt),
+      date: new Date((groupEntries[0]?.entry.airingAt ?? 0) * 1000)
+    }));
+
+  return (
+    <div className="modal-shell" role="dialog" aria-modal="true" onClick={onClose}>
+      <div className="modal-card ignored-modal-card" onClick={(event) => event.stopPropagation()}>
+        <div className="ignored-modal-scroll">
+          <header className="modal-header">
+            <div>
+              <p className="eyebrow">Recuperación rápida</p>
+              <h2>Animes ignorados</h2>
+              <p className="ignored-dialog-note">
+                Los autoignorados se restaurarán como <strong>Dudando</strong>. Los manuales
+                volverán a <strong>Sin estado</strong>.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="ghost-button modal-close-button"
+              aria-label="Cerrar"
+              title="Cerrar"
+              onClick={onClose}
+            >
+              &times;
+            </button>
+          </header>
+
+          {entries.length === 0 ? (
+            <div className="empty-state small">
+              <p>No hay animes ignorados esta semana.</p>
+            </div>
+          ) : (
+            <div className="ignored-list">
+              {ignoredDayGroups.map((group) => (
+                <section key={group.weekdayIndex} className="ignored-day-group">
+                  <header className="ignored-day-header">
+                    <h3>{formatDayLabel(group.date)}</h3>
+                    <span>{formatDateLabel(group.date)}</span>
+                    <span className="ignored-day-count">{group.entries.length}</span>
+                  </header>
+
+                  <div className="ignored-day-items">
+                    {group.entries.map((entry) => {
+                      const scoreLabel = formatAnimeMetric(entry.anime.averageScore, 'score');
+                      const scoreColor = getScoreColor(entry.anime.averageScore);
+
+                      return (
+                        <div key={entry.anime.id} className="ignored-item">
+                          <div className="ignored-item-main">
+                            <button
+                              type="button"
+                              className="ignored-cover-frame ignored-detail-trigger"
+                              onClick={() => onOpenDetails(entry)}
+                              aria-label={`Abrir detalles de ${entry.anime.title}`}
+                            >
+                              {entry.anime.coverImage ? (
+                                <img
+                                  src={entry.anime.coverImage}
+                                  alt={entry.anime.title}
+                                  loading="lazy"
+                                  className="cover-image"
+                                />
+                              ) : (
+                                <div className="cover-fallback">{entry.anime.title.slice(0, 1)}</div>
+                              )}
+                            </button>
+
+                            <div className="ignored-copy">
+                              <button
+                                type="button"
+                                className="ignored-title-button"
+                                onClick={() => onOpenDetails(entry)}
+                              >
+                                {entry.anime.title}
+                              </button>
+
+                              <div className="ignored-item-meta">
+                                <span className="time-chip">{entry.timeLabel}</span>
+                                {entry.entry.episode ? (
+                                  <span className="time-chip soft">Ep.{entry.entry.episode}</span>
+                                ) : null}
+                                <span
+                                  className="metric-pill"
+                                  title="Score"
+                                  style={scoreColor ? { color: scoreColor } : undefined}
+                                >
+                                  {scoreLabel}
+                                </span>
+                              </div>
+
+                              <p
+                                className={`ignored-reason ignored-reason-${entry.ignoredSource ?? 'automatic'}`}
+                              >
+                                {getIgnoredSourceLabel(entry)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="ghost-button ignored-restore-button"
+                            onClick={() => onRestore(entry)}
+                          >
+                            <Undo2 className="ui-icon" />
+                            <span>Restaurar</span>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                </div>
-                <div className="ignored-item-actions">
-                  <span
-                    className="metric-pill"
-                    title="Score"
-                    style={scoreColor ? { color: scoreColor } : undefined}
-                  >
-                    {scoreLabel}
-                  </span>
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() => onRestore(entry)}
-                  >
-                    Restaurar
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+                </section>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
-    </div>
-  </div>
-);
+  );
+};
 
 const StatusCard = ({ label, value }: { label: string; value: string }): JSX.Element => (
   <article className="status-card">
