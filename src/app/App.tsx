@@ -1039,6 +1039,31 @@ const App = (): JSX.Element => {
   const noSnapshotYet =
     booted && snapshot.syncState.weekKey === null && snapshot.scheduleEntries.length === 0;
 
+  const handleDaySelect = (dayIndex: number): void => {
+    setActiveCompactDay(dayIndex);
+
+    if (isCompact) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      const calendar = document.querySelector<HTMLElement>('.calendar');
+      const targetDay = document.getElementById(`calendar-day-${dayIndex}`);
+
+      if (!calendar || !targetDay) {
+        return;
+      }
+
+      const calendarRect = calendar.getBoundingClientRect();
+      const targetRect = targetDay.getBoundingClientRect();
+
+      calendar.scrollTo({
+        left: calendar.scrollLeft + targetRect.left - calendarRect.left,
+        behavior: 'smooth'
+      });
+    });
+  };
+
   return (
     <div className="app-shell">
       <div className="backdrop blob-a" />
@@ -1273,22 +1298,21 @@ const App = (): JSX.Element => {
         </label>
       </section>
 
-      {isCompact && (
-        <nav className="day-nav" aria-label="Seleccionar día">
-          {deferredCalendarView.days.map((day) => (
-            <button
-              key={day.index}
-              type="button"
-              className={day.index === activeCompactDay ? 'day-pill active' : 'day-pill'}
-              onClick={() => setActiveCompactDay(day.index)}
-              aria-label={day.label}
-              title={day.label}
-            >
-              <span>{compactDayLabels[day.index] ?? day.shortLabel}</span>
-            </button>
-          ))}
-        </nav>
-      )}
+      <nav className="day-nav calendar-day-nav" aria-label="Seleccionar día">
+        {deferredCalendarView.days.map((day) => (
+          <button
+            key={day.index}
+            type="button"
+            className={day.index === activeCompactDay ? 'day-pill active' : 'day-pill'}
+            onClick={() => handleDaySelect(day.index)}
+            aria-label={`Mostrar ${day.label}`}
+            aria-pressed={day.index === activeCompactDay}
+            title={day.label}
+          >
+            <span>{compactDayLabels[day.index] ?? day.shortLabel}</span>
+          </button>
+        ))}
+      </nav>
 
       {noSnapshotYet ? (
         <section className="empty-state">
@@ -1389,46 +1413,47 @@ const DayColumn = ({
 
   return (
     <article
-    className={highlightToday ? 'day-column today' : 'day-column'}
-    aria-current={highlightToday ? 'date' : undefined}
-  >
-    <header className="day-header">
-      <div className="day-header-copy">
-        <h2>{day.label}</h2>
-        <p>{day.dateLabel}</p>
+      id={`calendar-day-${day.index}`}
+      className={highlightToday ? 'day-column today' : 'day-column'}
+      aria-current={highlightToday ? 'date' : undefined}
+    >
+      <header className="day-header">
+        <div className="day-header-copy">
+          <h2>{day.label}</h2>
+          <p>{day.dateLabel}</p>
+        </div>
+        {highlightToday ? <span className="today-indicator">Hoy</span> : null}
+      </header>
+
+      <div className="cards">
+        {day.entries.length === 0 ? (
+          <div className="empty-day">Sin estrenos visibles este día.</div>
+        ) : (
+          <>
+            {nowMarkerPlacement === 'before-first' ? (
+              <NowMarker timeLabel={nowMarkerTimeLabel} />
+            ) : null}
+            {day.entries.map((entry, index) => {
+              const isMarkerAfterEntry =
+                nowMarkerPlacement === `after-entry:${entry.entry.key}` ||
+                (nowMarkerPlacement === 'after-last' && index === day.entries.length - 1);
+
+              return (
+                <Fragment key={entry.entry.key}>
+                  <AnimeCard
+                    entry={entry}
+                    isMenuOpen={activeDecisionMenuKey === entry.entry.key}
+                    onMenuToggle={onDecisionMenuToggle}
+                    onDecisionChange={onDecisionChange}
+                    onOpenDetails={onOpenDetails}
+                  />
+                  {isMarkerAfterEntry ? <NowMarker timeLabel={nowMarkerTimeLabel} /> : null}
+                </Fragment>
+              );
+            })}
+          </>
+        )}
       </div>
-      {highlightToday ? <span className="today-indicator">Hoy</span> : null}
-    </header>
-
-    <div className="cards">
-      {day.entries.length === 0 ? (
-        <div className="empty-day">Sin estrenos visibles este día.</div>
-      ) : (
-        <>
-          {nowMarkerPlacement === 'before-first' ? (
-            <NowMarker timeLabel={nowMarkerTimeLabel} />
-          ) : null}
-          {day.entries.map((entry, index) => {
-            const isMarkerAfterEntry =
-              nowMarkerPlacement === `after-entry:${entry.entry.key}` ||
-              (nowMarkerPlacement === 'after-last' && index === day.entries.length - 1);
-
-            return (
-              <Fragment key={entry.entry.key}>
-                <AnimeCard
-                  entry={entry}
-                  isMenuOpen={activeDecisionMenuKey === entry.entry.key}
-                  onMenuToggle={onDecisionMenuToggle}
-                  onDecisionChange={onDecisionChange}
-                  onOpenDetails={onOpenDetails}
-                />
-                {isMarkerAfterEntry ? <NowMarker timeLabel={nowMarkerTimeLabel} /> : null}
-              </Fragment>
-            );
-          })}
-        </>
-      )}
-    </div>
     </article>
   );
 };
