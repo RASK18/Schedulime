@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  buildStreamingAnimeUrl,
   buildStreamingSlug,
   buildStreamingValidationRequestUrl,
   buildStreamingUrl,
@@ -42,6 +43,14 @@ describe('streaming helpers', () => {
   it('builds the final streaming url from the resolved title and episode', () => {
     expect(buildStreamingUrl('ReZero kara Hajimeru-Isekai Seikatsu 4th Season', 2)).toBe(
       'https://animeav1.com/media/rezero-kara-hajimeru-isekai-seikatsu-4th-season/2'
+    );
+  });
+
+  it('builds the general Animeav1 url without an episode suffix', () => {
+    expect(
+      buildStreamingAnimeUrl('Toumei na Yoru ni Kakeru Kimi to, Me ni Mienai Koi wo Shita')
+    ).toBe(
+      'https://animeav1.com/media/toumei-na-yoru-ni-kakeru-kimi-to-me-ni-mienai-koi-wo-shita'
     );
   });
 

@@ -46,6 +46,7 @@ import {
   syncSchedulime
 } from '../lib/sync';
 import {
+  buildStreamingAnimeUrl,
   resolveStreamingUrl,
   type StreamingValidationState,
   validateStreamingUrl
@@ -1680,6 +1681,9 @@ const AnimeDetailsDialog = ({
   }, [entry.anime.idMal, entry.anime.title, entry.entry.episode]);
 
   const isResolvingStreaming = resolvedTitle === null;
+  const animeav1Url =
+    buildStreamingAnimeUrl(resolvedTitle ?? entry.anime.title) ?? 'https://animeav1.com';
+  const streamingButtonLabel = `Ver Ep. ${entry.entry.episode ?? '?'}`;
 
   return (
     <div className="modal-shell" role="dialog" aria-modal="true" onClick={onClose}>
@@ -1731,7 +1735,7 @@ const AnimeDetailsDialog = ({
                   disabled
                   title="Preparando enlace de streaming"
                 >
-                  Ver Online
+                  {streamingButtonLabel}
                 </button>
               ) : streamingUrl ? (
                 streamingValidationState === 'missing' ? (
@@ -1741,7 +1745,7 @@ const AnimeDetailsDialog = ({
                     disabled
                     title="El enlace de streaming no esta disponible"
                   >
-                    Ver Online
+                    {streamingButtonLabel}
                   </button>
                 ) : (
                   <a
@@ -1755,14 +1759,17 @@ const AnimeDetailsDialog = ({
                         : `Abrir streaming de ${resolvedTitle ?? entry.anime.title}`
                     }
                   >
-                    Ver Online
+                    {streamingButtonLabel}
                   </a>
                 )
               ) : (
-                <button type="button" className="link-button disabled" disabled>
-                  Streaming pronto
+                <button type="button" className="link-button streaming-link-button disabled" disabled>
+                  {streamingButtonLabel}
                 </button>
               )}
+              <a href={animeav1Url} className="link-button" target="_blank" rel="noreferrer">
+                Animeav1
+              </a>
               <a href={entry.anime.siteUrl} className="link-button" target="_blank" rel="noreferrer">
                 AniList
               </a>

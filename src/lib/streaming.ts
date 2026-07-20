@@ -71,17 +71,26 @@ export const buildStreamingSlug = (title: string): string =>
     .replace(/^-+|-+$/g, '')
     .toLowerCase();
 
-export const buildStreamingUrl = (title: string, episode: number | null): string | null => {
-  if (episode === null) {
-    return null;
-  }
-
+export const buildStreamingAnimeUrl = (title: string): string | null => {
   const slug = buildStreamingSlug(title);
   if (!slug) {
     return null;
   }
 
-  return `${STREAMING_BASE_URL}/${slug}/${episode}`;
+  return `${STREAMING_BASE_URL}/${slug}`;
+};
+
+export const buildStreamingUrl = (title: string, episode: number | null): string | null => {
+  if (episode === null) {
+    return null;
+  }
+
+  const animeUrl = buildStreamingAnimeUrl(title);
+  if (!animeUrl) {
+    return null;
+  }
+
+  return `${animeUrl}/${episode}`;
 };
 
 export const resolveStreamingTitle = async (
