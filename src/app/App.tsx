@@ -64,6 +64,7 @@ import {
 import {
   buildStreamingAnimeUrl,
   resolveStreamingUrl,
+  type StreamingTitleSource,
   type StreamingValidationState,
   validateStreamingUrl
 } from '../lib/streaming';
@@ -279,7 +280,8 @@ const logStreamingButtonResult = (params: {
   animeTitle: string;
   episode: number | null;
   idMal: number | null | undefined;
-  resolvedTitle: string;
+  jikanTitle: string | null;
+  titleSource: StreamingTitleSource;
   streamingUrl: string | null;
   validationState: StreamingValidationState;
 }): void => {
@@ -289,7 +291,8 @@ const logStreamingButtonResult = (params: {
     episode: params.episode,
     url: params.streamingUrl,
     titleAL: params.animeTitle,
-    titleJK: params.resolvedTitle,
+    titleJK: params.jikanTitle,
+    titleSource: params.titleSource,
     validationState: params.validationState
   });
 };
@@ -1438,14 +1441,16 @@ const AnimeDetailsDialog = ({
   const genresLabel =
     entry.anime.genres.length > 0 ? entry.anime.genres.join(' / ') : 'Sin género especificado';
   const scoreColor = getScoreColor(entry.anime.averageScore);
-  const [resolvedTitle, setResolvedTitle] = useState<string | null>(null);
+  const [effectiveTitle, setEffectiveTitle] = useState(entry.anime.title);
+  const [isResolvingStreaming, setIsResolvingStreaming] = useState(true);
   const [streamingUrl, setStreamingUrl] = useState<string | null>(null);
   const [streamingValidationState, setStreamingValidationState] = useState<StreamingValidationState>('unknown');
 
   useEffect(() => {
     let cancelled = false;
 
-    setResolvedTitle(null);
+    setEffectiveTitle(entry.anime.title);
+    setIsResolvingStreaming(true);
     setStreamingUrl(null);
     setStreamingValidationState('unknown');
 
@@ -1453,12 +1458,18 @@ const AnimeDetailsDialog = ({
       idMal: entry.anime.idMal ?? null,
       fallbackTitle: entry.anime.title,
       episode: entry.entry.episode
-    }).then(({ resolvedTitle: nextResolvedTitle, streamingUrl: nextStreamingUrl }) => {
+    }).then(({
+      jikanTitle: nextJikanTitle,
+      effectiveTitle: nextEffectiveTitle,
+      titleSource,
+      streamingUrl: nextStreamingUrl
+    }) => {
       if (cancelled) {
         return;
       }
 
-      setResolvedTitle(nextResolvedTitle);
+      setEffectiveTitle(nextEffectiveTitle);
+      setIsResolvingStreaming(false);
       setStreamingUrl(nextStreamingUrl);
 
       if (!nextStreamingUrl) {
@@ -1467,7 +1478,8 @@ const AnimeDetailsDialog = ({
           animeTitle: entry.anime.title,
           episode: entry.entry.episode,
           idMal: entry.anime.idMal,
-          resolvedTitle: nextResolvedTitle,
+          jikanTitle: nextJikanTitle,
+          titleSource,
           streamingUrl: null,
           validationState: 'unknown'
         });
@@ -1482,7 +1494,8 @@ const AnimeDetailsDialog = ({
             animeTitle: entry.anime.title,
             episode: entry.entry.episode,
             idMal: entry.anime.idMal,
-            resolvedTitle: nextResolvedTitle,
+            jikanTitle: nextJikanTitle,
+            titleSource,
             streamingUrl: nextStreamingUrl,
             validationState
           });
@@ -1495,9 +1508,7 @@ const AnimeDetailsDialog = ({
     };
   }, [entry.anime.idMal, entry.anime.title, entry.entry.episode]);
 
-  const isResolvingStreaming = resolvedTitle === null;
-  const animeav1Url =
-    buildStreamingAnimeUrl(resolvedTitle ?? entry.anime.title) ?? 'https://animeav1.com';
+  const animeav1Url = buildStreamingAnimeUrl(effectiveTitle) ?? 'https://animeav1.com';
   const streamingButtonLabel = `Ver Ep. ${entry.entry.episode ?? '?'}`;
 
   return (
@@ -1571,7 +1582,7 @@ const AnimeDetailsDialog = ({
                     title={
                       streamingValidationState === 'unknown'
                         ? 'Comprobando disponibilidad del enlace'
-                        : `Abrir streaming de ${resolvedTitle ?? entry.anime.title}`
+                        : `Abrir streaming de ${effectiveTitle}`
                     }
                   >
                     {streamingButtonLabel}

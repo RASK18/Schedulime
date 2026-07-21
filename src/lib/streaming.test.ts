@@ -143,36 +143,55 @@ describe('streaming helpers', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
-  it('uses the Jikan title when it is available', async () => {
+  it('uses the Jikan title when it differs from the AniList fallback', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ data: { title: 'Re:Zero kara Hajimeru Isekai Seikatsu 4th Season' } }), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json'
+      new Response(
+        JSON.stringify({
+          data: { title: 'Tai-Ari deshita. Ojousama wa Kakutou Game nante Shinai' }
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
-      })
+      )
     );
 
     await expect(
       resolveStreamingUrl({
-        idMal: 101001,
-        fallbackTitle: 'Fallback AniList Title',
-        episode: 2
+        idMal: 46488,
+        fallbackTitle: 'Tai-Ari deshita.: Ojou-sama wa Kakutou Game nante Shinai',
+        episode: 3
       })
     ).resolves.toEqual({
-      resolvedTitle: 'Re:Zero kara Hajimeru Isekai Seikatsu 4th Season',
-      streamingUrl: 'https://animeav1.com/media/rezero-kara-hajimeru-isekai-seikatsu-4th-season/2'
+      jikanTitle: 'Tai-Ari deshita. Ojousama wa Kakutou Game nante Shinai',
+      effectiveTitle: 'Tai-Ari deshita. Ojousama wa Kakutou Game nante Shinai',
+      titleSource: 'jikan',
+      streamingUrl:
+        'https://animeav1.com/media/tai-ari-deshita-ojousama-wa-kakutou-game-nante-shinai/3'
     });
   });
 
-  it('falls back to the AniList title when idMal is missing', async () => {
+  it('keeps the Jikan title null and uses the AniList title when idMal is missing', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-    await expect(resolveStreamingTitle(null, 'AniList Only Title')).resolves.toBe('AniList Only Title');
+    await expect(
+      resolveStreamingUrl({
+        idMal: null,
+        fallbackTitle: 'AniList Only Title',
+        episode: 4
+      })
+    ).resolves.toEqual({
+      jikanTitle: null,
+      effectiveTitle: 'AniList Only Title',
+      titleSource: 'anilist',
+      streamingUrl: 'https://animeav1.com/media/anilist-only-title/4'
+    });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it.each([404, 429, 500])('falls back to the AniList title when Jikan responds with %i', async (status) => {
+  it.each([404, 429, 500])('returns null when Jikan responds with %i', async (status) => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ status, error: 'Request failed' }), {
         status,
@@ -182,17 +201,24 @@ describe('streaming helpers', () => {
       })
     );
 
-    await expect(resolveStreamingTitle(101100 + status, 'AniList Fallback Title')).resolves.toBe(
-      'AniList Fallback Title'
-    );
+    await expect(resolveStreamingTitle(101100 + status)).resolves.toBeNull();
   });
 
-  it('falls back to the AniList title when Jikan fails with a network error', async () => {
+  it('returns null when Jikan fails with a network error', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network down'));
 
-    await expect(resolveStreamingTitle(101700, 'AniList Fallback Title')).resolves.toBe(
-      'AniList Fallback Title'
-    );
+    await expect(
+      resolveStreamingUrl({
+        idMal: 101700,
+        fallbackTitle: 'AniList Fallback Title',
+        episode: 5
+      })
+    ).resolves.toEqual({
+      jikanTitle: null,
+      effectiveTitle: 'AniList Fallback Title',
+      titleSource: 'anilist',
+      streamingUrl: 'https://animeav1.com/media/anilist-fallback-title/5'
+    });
   });
 
   it('deduplicates in-flight Jikan requests and caches successful titles', async () => {
@@ -202,8 +228,8 @@ describe('streaming helpers', () => {
     });
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(() => fetchPromise);
 
-    const firstRequest = resolveStreamingTitle(102000, 'Fallback Title');
-    const secondRequest = resolveStreamingTitle(102000, 'Fallback Title');
+    const firstRequest = resolveStreamingTitle(102000);
+    const secondRequest = resolveStreamingTitle(102000);
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
@@ -223,7 +249,7 @@ describe('streaming helpers', () => {
 
     fetchSpy.mockClear();
 
-    await expect(resolveStreamingTitle(102000, 'Fallback Title')).resolves.toBe('Cached Jikan Title');
+    await expect(resolveStreamingTitle(102000)).resolves.toBe('Cached Jikan Title');
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@ const JIKAN_API_BASE_URL = 'https://api.jikan.moe/v4/anime';
 const STREAMING_VALIDATOR_URL = import.meta.env.VITE_STREAMING_VALIDATOR_URL?.trim() ?? '';
 
 export type StreamingValidationState = 'available' | 'missing' | 'unknown';
+export type StreamingTitleSource = 'jikan' | 'anilist';
 
 interface JikanAnimeResponse {
   data?: {
@@ -94,11 +95,10 @@ export const buildStreamingUrl = (title: string, episode: number | null): string
 };
 
 export const resolveStreamingTitle = async (
-  idMal: number | null | undefined,
-  fallbackTitle: string
-): Promise<string> => {
+  idMal: number | null | undefined
+): Promise<string | null> => {
   if (idMal === null || idMal === undefined) {
-    return fallbackTitle;
+    return null;
   }
 
   const cachedTitle = streamingTitleCache.get(idMal);
@@ -108,7 +108,7 @@ export const resolveStreamingTitle = async (
 
   const pendingRequest = pendingStreamingTitleRequests.get(idMal);
   if (pendingRequest) {
-    return (await pendingRequest) ?? fallbackTitle;
+    return pendingRequest;
   }
 
   const request = (async (): Promise<string | null> => {
@@ -136,7 +136,7 @@ export const resolveStreamingTitle = async (
 
   pendingStreamingTitleRequests.set(idMal, request);
 
-  return (await request) ?? fallbackTitle;
+  return request;
 };
 
 export const resolveStreamingUrl = async (params: {
@@ -144,14 +144,19 @@ export const resolveStreamingUrl = async (params: {
   fallbackTitle: string;
   episode: number | null;
 }): Promise<{
-  resolvedTitle: string;
+  jikanTitle: string | null;
+  effectiveTitle: string;
+  titleSource: StreamingTitleSource;
   streamingUrl: string | null;
 }> => {
-  const resolvedTitle = await resolveStreamingTitle(params.idMal, params.fallbackTitle);
+  const jikanTitle = await resolveStreamingTitle(params.idMal);
+  const effectiveTitle = jikanTitle ?? params.fallbackTitle;
 
   return {
-    resolvedTitle,
-    streamingUrl: buildStreamingUrl(resolvedTitle, params.episode)
+    jikanTitle,
+    effectiveTitle,
+    titleSource: jikanTitle ? 'jikan' : 'anilist',
+    streamingUrl: buildStreamingUrl(effectiveTitle, params.episode)
   };
 };
 
